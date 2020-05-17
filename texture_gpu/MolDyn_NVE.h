@@ -4,15 +4,15 @@
 #include <cmath>        // rint, pow
 #include <vector>
 #include <cstdio>
-//#include <curand.h>
+#include <curand.h>
 #include <curand_kernel.h>
 #include <cuda_runtime.h>
 #include <cuda.h>
 #include "lock.h"
+//#include <stdio.h>
 
-#define th 256
-#define bl 32
-
+#define bl 32 
+#define th 256 //con questi numeri mi sbaglia v e w ma non k e non temp finale 
 using namespace std;
 
 //parameters, observables
@@ -29,12 +29,22 @@ float stima_pot_gpu, stima_kin_gpu, stima_etot_gpu, stima_temp_gpu,stima_press_g
 vector<vector<float>> properties_gpu(m_props);
 
 int restart;
-//############### dimension for a specific molecule #############
+
+	texture<float> texx;
+	texture<float> texy;
+	texture<float> texz;
+	texture<float> texxold;
+	texture<float> texyold;
+	texture<float> texzold;
+	texture<float> texvx;
+	texture<float> texvy;
+	texture<float> texvz;
 
 // thermodynamical state
 int npart;
 float energy,temp,vol,rho,box,rcut;
 
+//le dichiaro qui per poter fare cudaFree e cudaMalloc di loro solo una volta 
 float *dev_w,*dev_v,*dev_k; //per calcolare le energie in measure
 float* dev_hist;//per la g(r)
 
@@ -43,7 +53,6 @@ int nstep, iprint, seed;
 float delta;
 
 //structures
-//questa struttura Particelle contiene tutte le variabili relative alle particelle
 struct Particles {
 
 	float* dev_x;
@@ -59,7 +68,6 @@ struct Particles {
 	cudaEvent_t start,stop;
 
 };
-
 
 __constant__ int gpu_npart;
 __constant__ float gpu_binsize;
@@ -109,14 +117,14 @@ void Move_gpu(Particles*);
  
 void print_device_properties();
 
-__global__ void  measure_pot_virial(Lock lock,float*,float*,float*,float*,float*,float*);
-__global__ void  measure_kinetic(Lock lock,float*,float*,float*,float*);
+__global__ void  measure_pot_virial(Lock lock,float*,float*,float*);
+__global__ void  measure_kinetic(Lock lock,float*);
 
 void print_velocities(Particles*);
 
 void Measure(Particles*);
 
-__global__ void prova_gpu (float*,float*,float);//per testare la Pbc_gpu 
+__global__ void prova_gpu (float*,float*);//per testare la Pbc_gpu 
 
 //########################### IMPLEMENTAZIONI #################################
 
@@ -171,9 +179,6 @@ void print_device_properties() {
  }
 
 };
-
-//##################### INPUT #########################################
-
 
 void Input(Particles* P){ //Prepare all stuff for the simulation
   ifstream ReadInput,ReadConf,ReadPrecedentConf;
@@ -230,12 +235,9 @@ void Input(Particles* P){ //Prepare all stuff for the simulation
   bin_size = (box*0.5)/nbins; 
   cout << "size of each bin: " << bin_size << endl;  
 
-  n_props = 5; //Number of observables
+//Prepare array for measurements   //they're just indices
+  n_props = 5; //Number of observables, already add pressure
 
- //alloca la memoria che mi serve su device
-
- HANDLE_ERROR( cudaSetDevice(1)); 
- 
  HANDLE_ERROR( cudaMalloc( (void**)&P->dev_x,
                               npart*sizeof(float) ) );
  HANDLE_ERROR( cudaMalloc( (void**)&P->dev_y,
@@ -255,13 +257,40 @@ void Input(Particles* P){ //Prepare all stuff for the simulation
  HANDLE_ERROR( cudaMalloc( (void**)&P->dev_vz,
                               npart*sizeof(float) ) );
 
+ HANDLE_ERROR( cudaBindTexture( NULL, texx,
+                                   P->dev_x,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texy,
+                                   P->dev_y,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texz,
+                                   P->dev_z,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texxold,
+                                   P->dev_xold,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texyold,
+                                   P->dev_yold,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texzold,
+                                   P->dev_zold,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texvx,
+                                   P->dev_vx,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texvy,
+                                   P->dev_vy,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texvz,
+                                   P->dev_vz,
+                                   npart*sizeof(float) ) );
+
  HANDLE_ERROR( cudaMalloc( (void**)&dev_w, sizeof(float)  ) );
  HANDLE_ERROR( cudaMalloc( (void**)&dev_v, sizeof(float)  ) );
  HANDLE_ERROR( cudaMalloc( (void**)&dev_k, sizeof(float)  ) );
  HANDLE_ERROR( cudaMalloc( (void**)&dev_hist, nbins*10*sizeof(float)  ) );
 
 
-// variabili da caricare che mi servono per inizializzare quelle da usare su device
 float* x = new float[npart];
 float* y = new float[npart];
 float* z = new float[npart];
@@ -349,9 +378,7 @@ else {
      yold[i] = Pbc(y[i] - vy[i] * delta);
      zold[i] = Pbc(z[i] - vz[i] * delta);
    }
-}
-
-// copio i valori iniziale sulla  memoria allocata precedentemente su device 
+} 
    HANDLE_ERROR( cudaMemcpy( P->dev_x, x,
                               npart*sizeof(float),
                               cudaMemcpyHostToDevice ) ); 
@@ -380,7 +407,6 @@ else {
                               npart*sizeof(float),
                               cudaMemcpyHostToDevice ) );  
 
-
  delete [] x;
  delete [] y;
  delete [] z;
@@ -394,8 +420,6 @@ else {
    return;
 }
 
-
-//per inizializzare le coordinate delle particelle quando leggo una configurazione precedente
 
 void first_move(float* x,float*y,float*z,float*xold,float*yold,float*zold,float*vx,float* vy,float* vz) {
 	float fx,fy,fz;
@@ -443,8 +467,17 @@ return;
 
 }
 
-//chiamo alla fine per liberare la memoria sul device
 void exit(Particles* P) {
+
+    cudaUnbindTexture( texx );
+    cudaUnbindTexture( texy );
+    cudaUnbindTexture( texz );
+    cudaUnbindTexture( texxold );
+    cudaUnbindTexture( texyold );
+    cudaUnbindTexture( texzold );
+    cudaUnbindTexture( texvx );
+    cudaUnbindTexture( texvy );
+    cudaUnbindTexture( texvz );
 
     HANDLE_ERROR( cudaFree( P->dev_x ) );
     HANDLE_ERROR( cudaFree( P->dev_y ) );
@@ -461,11 +494,25 @@ void exit(Particles* P) {
    cudaFree(dev_k);
    cudaFree(dev_hist);
 
+ 
 }
 
 void Move_gpu(Particles *P) {
 
- verlet_gpu<<<bl,th>>>(P->dev_xold,P->dev_yold,P->dev_zold,P->dev_x,P->dev_y,P->dev_z,P->dev_vx,P->dev_vy,P->dev_vz);
+ float*xold,*yold,*zold,*x,*y,*z,*vx,*vy,*vz;
+ xold = P->dev_xold;
+ yold = P->dev_yold;
+ zold = P->dev_zold;
+ x = P->dev_x;
+ y = P->dev_y;
+ z = P->dev_z;
+ vx = P->dev_vx;
+ vy = P->dev_vy;
+ vz = P->dev_vz;
+
+ verlet_gpu<<<bl,th>>>(xold,yold,zold,x,y,z,vx,vy,vz);
+
+ //cudaDeviceSynchronize();
 
 }
 
@@ -474,31 +521,27 @@ __global__ void prova_gpu (float* a,float* p) {
  *a = Pbc_gpu(*p,gpu_box);
 
 }
-
-
 __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,float*z,float*vx,float*vy,float*vz){//,float*fx,float*fy,float*fz) {
 
 	__shared__ float f0[th];
 	__shared__ float f1[th];
 	__shared__ float f2[th];
-	//__shared__ float xnew,ynew,znew;
-	float xnew,ynew,znew;
+	__shared__ float xnew,ynew,znew;
 	float temp0,temp1,temp2;
 	float dvec[3];
 	float dr;
 	int tid;
 	int cacheIndex = threadIdx.x;
 	int ip = blockIdx.x;
-
 	while (ip < gpu_npart ) {
 		tid = threadIdx.x;
 		temp0 =0;
 		temp1 =0;
 		temp2 =0;
-		while( tid < gpu_npart ) {
-			dvec[0] = Pbc_gpu(x[ip]-x[tid],gpu_box); 
-			dvec[1] = Pbc_gpu(y[ip]-y[tid],gpu_box); 
-			dvec[2] = Pbc_gpu(z[ip]-z[tid],gpu_box);
+		while( tid<gpu_npart ) {
+			dvec[0] = Pbc_gpu(tex1Dfetch(texx,ip)-tex1Dfetch(texx,tid),gpu_box); 
+			dvec[1] = Pbc_gpu(tex1Dfetch(texy,ip)-tex1Dfetch(texy,tid),gpu_box); 
+			dvec[2] = Pbc_gpu(tex1Dfetch(texz,ip)-tex1Dfetch(texz,tid),gpu_box);
 			dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
 			if (dr<gpu_rcut && dr>0) {
 				temp0 += dvec[0] * (48.0/pow(dr,14) - 24.0/pow(dr,8)); 
@@ -524,60 +567,47 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 
 	if (cacheIndex == 0) {
 
-		xnew = Pbc_gpu( 2.0 * x[ip] - xold[ip] + f0[0] *gpu_delta*gpu_delta ,gpu_box);
-		ynew = Pbc_gpu( 2.0 * y[ip] - yold[ip] + f1[0] *gpu_delta*gpu_delta ,gpu_box);
-		znew = Pbc_gpu( 2.0 * z[ip] - zold[ip] + f2[0] *gpu_delta*gpu_delta ,gpu_box);
+		xnew = Pbc_gpu( 2.0 * tex1Dfetch(texx,ip) - tex1Dfetch(texxold,ip) + f0[0] *gpu_delta*gpu_delta ,gpu_box);
+		ynew = Pbc_gpu( 2.0 * tex1Dfetch(texy,ip) - tex1Dfetch(texyold,ip) + f1[0] *gpu_delta*gpu_delta ,gpu_box);
+		znew = Pbc_gpu( 2.0 * tex1Dfetch(texz,ip) - tex1Dfetch(texzold,ip) + f2[0] *gpu_delta*gpu_delta ,gpu_box);
 
-		vx[ip] = Pbc_gpu(xnew - xold[ip],gpu_box) / (2.0 * gpu_delta);
-    		vy[ip] = Pbc_gpu(ynew - yold[ip],gpu_box) / (2.0 * gpu_delta);
-    		vz[ip] = Pbc_gpu(znew - zold[ip],gpu_box) / (2.0 * gpu_delta);
+		vx[ip] = Pbc_gpu(xnew - tex1Dfetch(texxold,ip),gpu_box) / (2.0 * gpu_delta);//sbaglia a calcolarle
+    		vy[ip] = Pbc_gpu(ynew - tex1Dfetch(texyold,ip),gpu_box) / (2.0 * gpu_delta);
+    		vz[ip] = Pbc_gpu(znew - tex1Dfetch(texzold,ip),gpu_box) / (2.0 * gpu_delta);
 
-    		xold[ip] = x[ip];
-    		yold[ip] = y[ip];
-    		zold[ip] = z[ip];
+    		xold[ip] = tex1Dfetch(texx,ip);
+    		yold[ip] = tex1Dfetch(texy,ip);
+    		zold[ip] = tex1Dfetch(texz,ip);
 
     		x[ip] = xnew;
    		y[ip] = ynew;
     		z[ip] = znew;
-
 		}
-
 		ip += gridDim.x;
 	}		
 }
 
-__global__ void  measure_kinetic(Lock lock,float*vx,float*vy,float*vz,float *k) {
+__global__ void  measure_kinetic(Lock lock,float *k) {
 
 	*k = 0.0;//energia cinetica
-
-	__shared__ float kin[th];
-
-	int cacheIndex = threadIdx.x;
-	int i = threadIdx.x + blockIdx.x*blockDim.x;
-	float a=0,b=0,c=0;
-	//printf("c %d", gpu_npart);
-	while (i < gpu_npart ) {
-		a += vx[i]*vx[i];
-		b += vy[i]*vy[i];
-		c += vz[i]*vz[i];
+	__shared__ float kin[th]; 
+	float a=0,b=0,c=0; 
+	int i = threadIdx.x+blockIdx.x*blockDim.x;
+	while (i<gpu_npart) {
+		a += tex1Dfetch(texvx,i)*tex1Dfetch(texvx,i);
+		b += tex1Dfetch(texvy,i)*tex1Dfetch(texvy,i);
+		c += tex1Dfetch(texvz,i)*tex1Dfetch(texvz,i);
 		i += blockDim.x*gridDim.x;
 	}
-
+	int cacheIndex = threadIdx.x;
         kin[cacheIndex] = a+b+c;
 	__syncthreads();
-
-	int tid = blockDim.x/2;
+	int tid = blockDim.x/2.;
 	while(tid !=0) {
-
-		if(cacheIndex < tid) 
-			kin[cacheIndex]+=kin[cacheIndex+tid];
-
+		if(cacheIndex<tid) kin[cacheIndex]+=kin[cacheIndex+tid];
 	__syncthreads();
-
 	tid /= 2;
-
 	}
-
 	if(cacheIndex==0) {
 		lock.lock();
 		*k += kin[0];
@@ -586,7 +616,7 @@ __global__ void  measure_kinetic(Lock lock,float*vx,float*vy,float*vz,float *k) 
 
 }
 
-__global__ void  measure_pot_virial(Lock lock,float* x,float*y,float*z,float *v,float *w,float* hist) {
+__global__ void  measure_pot_virial(Lock lock,float *v,float *w,float* hist) {
 
 	*w = 0.0;//viriale	
 	*v = 0.0;//potenziale	
@@ -603,30 +633,26 @@ __global__ void  measure_pot_virial(Lock lock,float* x,float*y,float*z,float *v,
 	int j;
 	while (i<gpu_npart-1) {
 		j = i+1+threadIdx.x;
+		__syncthreads();
 		while (j<gpu_npart) {
-
-			dvec[0] = Pbc_gpu(x[i]-x[j],gpu_box);
-                        dvec[1] = Pbc_gpu(y[i]-y[j],gpu_box);
-                        dvec[2] = Pbc_gpu(z[i]-z[j],gpu_box);
+			dvec[0] = Pbc_gpu(tex1Dfetch(texx,i)-tex1Dfetch(texx,j),gpu_box);
+                        dvec[1] = Pbc_gpu(tex1Dfetch(texy,i)-tex1Dfetch(texy,j),gpu_box);
+                        dvec[2] = Pbc_gpu(tex1Dfetch(texz,i)-tex1Dfetch(texz,j),gpu_box);
                         dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
+
 			bin = int(dr/gpu_binsize);
 			atomicAdd( &hist[bin],2);
-
                         if ( dr<gpu_rcut ) {
 				temp0 += 4.0/pow(dr,12) - 4.0/pow(dr,6);
                                 temp1 += 16.0/pow(dr,12) - 8.0/pow(dr,6);
 			}
-
 			j+=blockDim.x;
 		}
-
 	i+=gridDim.x;
 	}
-
 	pot[cacheIndex] = temp0;
 	vir[cacheIndex] = temp1;
 	__syncthreads();
-
 	tid = blockDim.x/2.;
 	while (tid!=0) {
 		if(cacheIndex<tid) {
@@ -636,7 +662,6 @@ __global__ void  measure_pot_virial(Lock lock,float* x,float*y,float*z,float *v,
 	__syncthreads();
 	tid /= 2.;
 	}
-
 	if (cacheIndex == 0) {
 		lock.lock();
 		*v += pot[0];
@@ -650,11 +675,13 @@ void Measure(Particles* P) {
 
  Lock lock;
 
-	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );//metto a 0 gli elementi dell'histogramma della g(r)
+	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );
 
-	measure_kinetic<<<bl,th>>>(lock,P->dev_vx,P->dev_vy,P->dev_vz,dev_k);
+	measure_kinetic<<<bl,th>>>(lock,dev_k);
 
-	measure_pot_virial<<<bl,th>>>(lock,P->dev_x,P->dev_y,P->dev_z,dev_v,dev_w,dev_hist);
+	measure_pot_virial<<<bl,th>>>(lock,dev_v,dev_w,dev_hist);
+
+	//cudaDeviceSynchronize();
 
 	float v,w,k;
 	float hist[nbins*10];
@@ -677,7 +704,6 @@ void Measure(Particles* P) {
         stima_etot_gpu = (t+v)/(float)npart+vtail; //Total energy per particle
         stima_press_gpu = rho*stima_temp_gpu+ (w + ptail*(float)npart ) / vol;
 
-	//carico per fare analisi dati con la CPU
         properties_gpu[0].push_back(stima_pot_gpu);
         properties_gpu[1].push_back(stima_kin_gpu);
         properties_gpu[2].push_back(stima_temp_gpu);
@@ -786,7 +812,7 @@ cout <<"\n";
 
 }
 
-void ConfFinal(Particles*P){ //Write final configuration, per ricominciare dalla simulazione precedente
+void ConfFinal(Particles*P){ //Write final configuration
 
   float * xold = new float[npart];
   float * yold = new float[npart];
@@ -856,14 +882,12 @@ vector<float> data(2);
 	 j++;
 	 v_mean.clear();
  }
-
  accettazione = 2*data[1];
  m_temp = data[0];
- //fatta l'analisi dati controllo a che temperatura si trova il sistema
  cout << "temperatura di ora: " << data[0] << " , con incertezza: " << data[1]<< endl;
- v_mean.clear(); 
-
- // radial correlation function 
+ v_mean.clear();
+ // radial correlation function
+ 
  string gdir_name = "output.gave.out";
  ofstream Gave(gdir_name,ios::out);
  

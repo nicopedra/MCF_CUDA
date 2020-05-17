@@ -1,3 +1,6 @@
+//float 4 bytes
+//int 4 bytes
+
 #include "MolDyn_NVE.h"
 
 //#define equilibration
@@ -10,7 +13,6 @@ int main(int argc, char** argv){
   temp = 0.8;
   m_temp=0;
   int N;
-  int istep;
   accettazione = 0.001;
   float errore = abs(m_temp-temp);  
 #ifdef equilibration
@@ -34,14 +36,14 @@ cout << "                tentativo numero: " << tentativo << endl;
 
   Particles P;
   P.TotalTime = 0;
-  istep = 1;
   Input(&P);  //Inizialization
+
   HANDLE_ERROR(cudaMemcpyToSymbol(gpu_npart, &npart, sizeof(int)));
   HANDLE_ERROR(cudaMemcpyToSymbol(gpu_box, &box, sizeof(float)));
   HANDLE_ERROR(cudaMemcpyToSymbol(gpu_binsize, &bin_size, sizeof(float)));
   HANDLE_ERROR(cudaMemcpyToSymbol(gpu_delta, &delta, sizeof(float)));
   HANDLE_ERROR(cudaMemcpyToSymbol(gpu_rcut, &rcut, sizeof(float)));
-  
+
   Measure(&P);
 
   cout << "Initial potential energy (with tail corrections) = " << stima_pot_gpu << endl;
@@ -55,7 +57,8 @@ cout << "                tentativo numero: " << tentativo << endl;
   cout<< "\n\n";
 
   N = 100; //number of blocks
-  for(istep=1; istep <= nstep; ++istep) {
+
+  for(int istep=1; istep <= nstep; ++istep) {
      Move_gpu(&P);
      if (istep%10 == 0) Measure(&P);
      if (istep%iprint == 0) cout << "Number of time-steps: " << istep << endl; 
