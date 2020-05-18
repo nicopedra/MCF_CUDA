@@ -103,7 +103,7 @@ void first_move(float*,float*,float*,float*,float*,float*,float*,float*,float*);
 
 __global__ void verlet_gpu(float*,float*,float*,float*,float*,float*,float*,float*,float*);
 
-__device__ float Pbc_gpu(float,float); 
+__device__ float Pbc_gpu(float); 
 
 void Move_gpu(Particles*);
  
@@ -471,7 +471,7 @@ void Move_gpu(Particles *P) {
 
 __global__ void prova_gpu (float* a,float* p) {
 
- *a = Pbc_gpu(*p,gpu_box);
+ *a = Pbc_gpu(*p);
 
 }
 
@@ -496,9 +496,9 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 		temp1 =0;
 		temp2 =0;
 		while( tid < gpu_npart ) {
-			dvec[0] = Pbc_gpu(x[ip]-x[tid],gpu_box); 
-			dvec[1] = Pbc_gpu(y[ip]-y[tid],gpu_box); 
-			dvec[2] = Pbc_gpu(z[ip]-z[tid],gpu_box);
+			dvec[0] = Pbc_gpu(x[ip]-x[tid]); 
+			dvec[1] = Pbc_gpu(y[ip]-y[tid]); 
+			dvec[2] = Pbc_gpu(z[ip]-z[tid]);
 			dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
 			if (dr<gpu_rcut && dr>0) {
 				temp0 += dvec[0] * (48.0/pow(dr,14) - 24.0/pow(dr,8)); 
@@ -524,13 +524,13 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 
 	if (cacheIndex == 0) {
 
-		xnew = Pbc_gpu( 2.0 * x[ip] - xold[ip] + f0[0] *gpu_delta*gpu_delta ,gpu_box);
-		ynew = Pbc_gpu( 2.0 * y[ip] - yold[ip] + f1[0] *gpu_delta*gpu_delta ,gpu_box);
-		znew = Pbc_gpu( 2.0 * z[ip] - zold[ip] + f2[0] *gpu_delta*gpu_delta ,gpu_box);
+		xnew = Pbc_gpu( 2.0 * x[ip] - xold[ip] + f0[0] *gpu_delta*gpu_delta );
+		ynew = Pbc_gpu( 2.0 * y[ip] - yold[ip] + f1[0] *gpu_delta*gpu_delta );
+		znew = Pbc_gpu( 2.0 * z[ip] - zold[ip] + f2[0] *gpu_delta*gpu_delta );
 
-		vx[ip] = Pbc_gpu(xnew - xold[ip],gpu_box) / (2.0 * gpu_delta);
-    		vy[ip] = Pbc_gpu(ynew - yold[ip],gpu_box) / (2.0 * gpu_delta);
-    		vz[ip] = Pbc_gpu(znew - zold[ip],gpu_box) / (2.0 * gpu_delta);
+		vx[ip] = Pbc_gpu(xnew - xold[ip]) / (2.0 * gpu_delta);
+    		vy[ip] = Pbc_gpu(ynew - yold[ip]) / (2.0 * gpu_delta);
+    		vz[ip] = Pbc_gpu(znew - zold[ip]) / (2.0 * gpu_delta);
 
     		xold[ip] = x[ip];
     		yold[ip] = y[ip];
@@ -605,9 +605,9 @@ __global__ void  measure_pot_virial(Lock lock,float* x,float*y,float*z,float *v,
 		j = i+1+threadIdx.x;
 		while (j<gpu_npart) {
 
-			dvec[0] = Pbc_gpu(x[i]-x[j],gpu_box);
-                        dvec[1] = Pbc_gpu(y[i]-y[j],gpu_box);
-                        dvec[2] = Pbc_gpu(z[i]-z[j],gpu_box);
+			dvec[0] = Pbc_gpu(x[i]-x[j]);
+                        dvec[1] = Pbc_gpu(y[i]-y[j]);
+                        dvec[2] = Pbc_gpu(z[i]-z[j]);
                         dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
 			bin = int(dr/gpu_binsize);
 			atomicAdd( &hist[bin],2);
@@ -836,8 +836,8 @@ float Pbc(float r) {  //Algorithm for periodic boundary conditions with side L=b
     return r - box * rintf(r/box);
 }
 
-__device__ float Pbc_gpu(float r,float box) {  //Algorithm for periodic boundary conditions with side L=box
-    return r - box * rintf(r/box);
+__device__ float Pbc_gpu(float r) {  //Algorithm for periodic boundary conditions with side L=box
+    return r - gpu_box * rintf(r/gpu_box);
 }
 
 void data_blocking_MD(int N) {

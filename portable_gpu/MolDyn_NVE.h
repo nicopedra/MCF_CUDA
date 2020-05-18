@@ -4,15 +4,15 @@
 #include <cmath>        // rint, pow
 #include <vector>
 #include <cstdio>
-#include <curand.h>
+//#include <curand.h>
 #include <curand_kernel.h>
 #include <cuda_runtime.h>
 #include <cuda.h>
 #include "lock.h"
-//#include <stdio.h>
+#include "book.h"
 
 #define bl 32 
-#define th 256 //con questi numeri mi sbaglia v e w ma non k e non temp finale 
+#define th 256  
 using namespace std;
 
 //parameters, observables
@@ -29,51 +29,56 @@ float stima_pot_gpu, stima_kin_gpu, stima_etot_gpu, stima_temp_gpu,stima_press_g
 vector<vector<float>> properties_gpu(m_props);
 
 int restart;
-
-	texture<float> texx;
-	texture<float> texy;
-	texture<float> texz;
-	texture<float> texxold;
-	texture<float> texyold;
-	texture<float> texzold;
-	texture<float> texvx;
-	texture<float> texvy;
-	texture<float> texvz;
+//############### dimension for a specific molecule #############
 
 // thermodynamical state
 int npart;
 float energy,temp,vol,rho,box,rcut;
 
-//le dichiaro qui per poter fare cudaFree e cudaMalloc di loro solo una volta 
+//su cpu
+float v,w,k;
+float hist[nbins*10];
+
+//su gpu
 float *dev_w,*dev_v,*dev_k; //per calcolare le energie in measure
 float* dev_hist;//per la g(r)
 
 // simulation
 int nstep, iprint, seed;
 float delta;
+float *x,*y,*z,*xold,*yold,*zold,*vx,*vy,*vz;
+
 
 //structures
+//questa struttura Particelle contiene tutte le variabili relative alle particelle
 struct Particles {
+	
+	int deviceID;
+        int size;
+        int offset;
 
-	float* dev_x;
-	float* dev_y;
-	float* dev_z;
-	float* dev_xold;
-	float* dev_yold;
-	float* dev_zold;
-	float* dev_vx;
-	float* dev_vy;
-	float* dev_vz;
+	float* x;
+	float* y;
+	float* z;
+	float* xold;
+	float* yold;
+	float* zold;
+	float* vx;
+	float* vy;
+	float* vz;
+
 	float TotalTime;
 	cudaEvent_t start,stop;
 
 };
+
 
 __constant__ int gpu_npart;
 __constant__ float gpu_binsize;
 __constant__ float gpu_rcut;
 __constant__ float gpu_delta;
 __constant__ float gpu_box;
+
 
 //################### functions ####################
 
@@ -117,8 +122,8 @@ void Move_gpu(Particles*);
  
 void print_device_properties();
 
-__global__ void  measure_pot_virial(Lock lock,float*,float*,float*);
-__global__ void  measure_kinetic(Lock lock,float*);
+__global__ void  measure_pot_virial(Lock lock,float*,float*,float*,float*,float*,float*);
+__global__ void  measure_kinetic(Lock lock,float*,float*,float*,float*);
 
 void print_velocities(Particles*);
 
@@ -127,23 +132,6 @@ void Measure(Particles*);
 __global__ void prova_gpu (float*,float*);//per testare la Pbc_gpu 
 
 //########################### IMPLEMENTAZIONI #################################
-
-static void HandleError( cudaError_t err,
-                         const char *file,
-                         int line ) {
-    if (err != cudaSuccess) {
-        printf( "%s in %s at line %d\n", cudaGetErrorString( err ),
-                file, line );
-        exit( EXIT_FAILURE );
-    }
-}
-#define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
-
-
-#define HANDLE_NULL( a ) {if (a == NULL) { \
-                            printf( "Host memory failed in %s at line %d\n", \
-                                    __FILE__, __LINE__ ); \
-                            exit( EXIT_FAILURE );}}
 
 template< typename T >
 void swap( T& a, T& b ) {
@@ -179,6 +167,9 @@ void print_device_properties() {
  }
 
 };
+
+//##################### INPUT #########################################
+
 
 void Input(Particles* P){ //Prepare all stuff for the simulation
   ifstream ReadInput,ReadConf,ReadPrecedentConf;
@@ -235,71 +226,60 @@ void Input(Particles* P){ //Prepare all stuff for the simulation
   bin_size = (box*0.5)/nbins; 
   cout << "size of each bin: " << bin_size << endl;  
 
-//Prepare array for measurements   //they're just indices
-  n_props = 5; //Number of observables, already add pressure
+  n_props = 5; //Number of observables
 
- HANDLE_ERROR( cudaMalloc( (void**)&P->dev_x,
-                              npart*sizeof(float) ) );
- HANDLE_ERROR( cudaMalloc( (void**)&P->dev_y,
-                              npart*sizeof(float) ) );
- HANDLE_ERROR( cudaMalloc( (void**)&P->dev_z,
-                              npart*sizeof(float) ) );
- HANDLE_ERROR( cudaMalloc( (void**)&P->dev_xold,
-                              npart*sizeof(float) ) );
- HANDLE_ERROR( cudaMalloc( (void**)&P->dev_yold,
-                              npart*sizeof(float) ) );
- HANDLE_ERROR( cudaMalloc( (void**)&P->dev_zold,
-                              npart*sizeof(float) ) );
- HANDLE_ERROR( cudaMalloc( (void**)&P->dev_vx,
-                              npart*sizeof(float) ) );
- HANDLE_ERROR( cudaMalloc( (void**)&P->dev_vy,
-                              npart*sizeof(float) ) );
- HANDLE_ERROR( cudaMalloc( (void**)&P->dev_vz,
-                              npart*sizeof(float) ) );
-
- HANDLE_ERROR( cudaBindTexture( NULL, texx,
-                                   P->dev_x,
-                                   npart*sizeof(float) ) );
- HANDLE_ERROR( cudaBindTexture( NULL, texy,
-                                   P->dev_y,
-                                   npart*sizeof(float) ) );
- HANDLE_ERROR( cudaBindTexture( NULL, texz,
-                                   P->dev_z,
-                                   npart*sizeof(float) ) );
- HANDLE_ERROR( cudaBindTexture( NULL, texxold,
-                                   P->dev_xold,
-                                   npart*sizeof(float) ) );
- HANDLE_ERROR( cudaBindTexture( NULL, texyold,
-                                   P->dev_yold,
-                                   npart*sizeof(float) ) );
- HANDLE_ERROR( cudaBindTexture( NULL, texzold,
-                                   P->dev_zold,
-                                   npart*sizeof(float) ) );
- HANDLE_ERROR( cudaBindTexture( NULL, texvx,
-                                   P->dev_vx,
-                                   npart*sizeof(float) ) );
- HANDLE_ERROR( cudaBindTexture( NULL, texvy,
-                                   P->dev_vy,
-                                   npart*sizeof(float) ) );
- HANDLE_ERROR( cudaBindTexture( NULL, texvz,
-                                   P->dev_vz,
-                                   npart*sizeof(float) ) );
-
+    HANDLE_ERROR( cudaHostAlloc( (void**)&x,
+                              npart*sizeof(float),
+                              cudaHostAllocWriteCombined |
+                                     cudaHostAllocMapped ) );
+    HANDLE_ERROR( cudaHostAlloc( (void**)&y,
+                              npart*sizeof(float),
+                              cudaHostAllocWriteCombined |
+                                     cudaHostAllocMapped ) );
+    HANDLE_ERROR( cudaHostAlloc( (void**)&z,
+                              npart*sizeof(float),
+                              cudaHostAllocWriteCombined |
+                                     cudaHostAllocMapped ) );
+    HANDLE_ERROR( cudaHostAlloc( (void**)&xold,
+                              npart*sizeof(float),
+                              cudaHostAllocWriteCombined |
+                                     cudaHostAllocMapped ) );
+    HANDLE_ERROR( cudaHostAlloc( (void**)&yold,
+                              npart*sizeof(float),
+                              cudaHostAllocWriteCombined |
+                                     cudaHostAllocMapped ) );
+    HANDLE_ERROR( cudaHostAlloc( (void**)&zold,
+                              npart*sizeof(float),
+                              cudaHostAllocWriteCombined |
+                                     cudaHostAllocMapped ) );
+    HANDLE_ERROR( cudaHostAlloc( (void**)&vx,
+                              npart*sizeof(float),
+                              cudaHostAllocWriteCombined |
+                                     cudaHostAllocMapped ) );
+    HANDLE_ERROR( cudaHostAlloc( (void**)&vy,
+                              npart*sizeof(float),
+                              cudaHostAllocWriteCombined |
+                                     cudaHostAllocMapped ) );
+   HANDLE_ERROR( cudaHostAlloc( (void**)&vz,
+                              npart*sizeof(float),
+                              cudaHostAllocWriteCombined |
+                                     cudaHostAllocMapped ) );
+ 
  HANDLE_ERROR( cudaMalloc( (void**)&dev_w, sizeof(float)  ) );
  HANDLE_ERROR( cudaMalloc( (void**)&dev_v, sizeof(float)  ) );
  HANDLE_ERROR( cudaMalloc( (void**)&dev_k, sizeof(float)  ) );
  HANDLE_ERROR( cudaMalloc( (void**)&dev_hist, nbins*10*sizeof(float)  ) );
 
-
-float* x = new float[npart];
-float* y = new float[npart];
-float* z = new float[npart];
-float* xold = new float[npart];
-float* yold = new float[npart];
-float* zold = new float[npart];
-float* vx = new float[npart];
-float* vy = new float[npart];
-float* vz = new float[npart];
+ HANDLE_ERROR( cudaHostGetDevicePointer( &P->x, x, 0 ) );
+ HANDLE_ERROR( cudaHostGetDevicePointer( &P->y, y, 0 ) );
+ HANDLE_ERROR( cudaHostGetDevicePointer( &P->z, z, 0 ) );
+ HANDLE_ERROR( cudaHostGetDevicePointer( &P->xold, xold, 0 ) );
+ HANDLE_ERROR( cudaHostGetDevicePointer( &P->yold, yold, 0 ) );
+ HANDLE_ERROR( cudaHostGetDevicePointer( &P->zold, zold, 0 ) );		
+ HANDLE_ERROR( cudaHostGetDevicePointer( &P->vx, vx, 0 ) );
+ HANDLE_ERROR( cudaHostGetDevicePointer( &P->vy, vy, 0 ) );
+ HANDLE_ERROR( cudaHostGetDevicePointer( &P->vz, vz, 0 ) );
+		
 		
 //Read initial configuration
   cout << "Read initial configuration from file "+file_start << endl << endl;
@@ -378,48 +358,12 @@ else {
      yold[i] = Pbc(y[i] - vy[i] * delta);
      zold[i] = Pbc(z[i] - vz[i] * delta);
    }
-} 
-   HANDLE_ERROR( cudaMemcpy( P->dev_x, x,
-                              npart*sizeof(float),
-                              cudaMemcpyHostToDevice ) ); 
-   HANDLE_ERROR( cudaMemcpy( P->dev_y, y,
-                              npart*sizeof(float),
-                              cudaMemcpyHostToDevice ) );
-   HANDLE_ERROR( cudaMemcpy( P->dev_z, z,
-                              npart*sizeof(float),
-                              cudaMemcpyHostToDevice ) );
-   HANDLE_ERROR( cudaMemcpy( P->dev_xold, xold,
-                              npart*sizeof(float),
-                              cudaMemcpyHostToDevice ) ); 
-   HANDLE_ERROR( cudaMemcpy( P->dev_yold, yold,
-                              npart*sizeof(float),
-                              cudaMemcpyHostToDevice ) );  
-   HANDLE_ERROR( cudaMemcpy( P->dev_zold, zold,
-                              npart*sizeof(float),
-                              cudaMemcpyHostToDevice ) );  
-   HANDLE_ERROR( cudaMemcpy( P->dev_vx, vx,
-                              npart*sizeof(float),
-                              cudaMemcpyHostToDevice ) ); 
-   HANDLE_ERROR( cudaMemcpy( P->dev_vy, vy,
-                              npart*sizeof(float),
-                              cudaMemcpyHostToDevice ) );  
-   HANDLE_ERROR( cudaMemcpy( P->dev_vz, vz,
-                              npart*sizeof(float),
-                              cudaMemcpyHostToDevice ) );  
-
- delete [] x;
- delete [] y;
- delete [] z;
- delete [] xold;
- delete [] yold;
- delete [] zold;
- delete [] vx;
- delete [] vy;
- delete [] vz;
-
-   return;
 }
 
+}
+
+
+//per inizializzare le coordinate delle particelle quando leggo una configurazione precedente
 
 void first_move(float* x,float*y,float*z,float*xold,float*yold,float*zold,float*vx,float* vy,float* vz) {
 	float fx,fy,fz;
@@ -467,52 +411,29 @@ return;
 
 }
 
+//chiamo alla fine per liberare la memoria sul device
 void exit(Particles* P) {
 
-    cudaUnbindTexture( texx );
-    cudaUnbindTexture( texy );
-    cudaUnbindTexture( texz );
-    cudaUnbindTexture( texxold );
-    cudaUnbindTexture( texyold );
-    cudaUnbindTexture( texzold );
-    cudaUnbindTexture( texvx );
-    cudaUnbindTexture( texvy );
-    cudaUnbindTexture( texvz );
-
-    HANDLE_ERROR( cudaFree( P->dev_x ) );
-    HANDLE_ERROR( cudaFree( P->dev_y ) );
-    HANDLE_ERROR( cudaFree( P->dev_z ) );
-    HANDLE_ERROR( cudaFree( P->dev_xold ) );
-    HANDLE_ERROR( cudaFree( P->dev_yold ) );
-    HANDLE_ERROR( cudaFree( P->dev_zold ) );
-    HANDLE_ERROR( cudaFree( P->dev_vx ) );
-    HANDLE_ERROR( cudaFree( P->dev_vy ) );
-    HANDLE_ERROR( cudaFree( P->dev_vz ) );
+    HANDLE_ERROR( cudaFreeHost( x ) );
+    HANDLE_ERROR( cudaFreeHost( y ) );
+    HANDLE_ERROR( cudaFreeHost( z ) );
+    HANDLE_ERROR( cudaFreeHost( xold ) );
+    HANDLE_ERROR( cudaFreeHost( yold ) );
+    HANDLE_ERROR( cudaFreeHost( zold ) );
+    HANDLE_ERROR( cudaFreeHost( vx ) );
+    HANDLE_ERROR( cudaFreeHost( vy ) );
+    HANDLE_ERROR( cudaFreeHost( vz ) );
 
    cudaFree(dev_w);
    cudaFree(dev_v);
    cudaFree(dev_k);
    cudaFree(dev_hist);
 
- 
 }
 
 void Move_gpu(Particles *P) {
 
- float*xold,*yold,*zold,*x,*y,*z,*vx,*vy,*vz;
- xold = P->dev_xold;
- yold = P->dev_yold;
- zold = P->dev_zold;
- x = P->dev_x;
- y = P->dev_y;
- z = P->dev_z;
- vx = P->dev_vx;
- vy = P->dev_vy;
- vz = P->dev_vz;
-
- verlet_gpu<<<bl,th>>>(xold,yold,zold,x,y,z,vx,vy,vz);
-
- //cudaDeviceSynchronize();
+ verlet_gpu<<<bl,th>>>(P->xold,P->yold,P->zold,P->x,P->y,P->z,P->vx,P->vy,P->vz);
 
 }
 
@@ -521,27 +442,31 @@ __global__ void prova_gpu (float* a,float* p) {
  *a = Pbc_gpu(*p);
 
 }
+
+
 __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,float*z,float*vx,float*vy,float*vz){
 
 	__shared__ float f0[th];
 	__shared__ float f1[th];
 	__shared__ float f2[th];
-	__shared__ float xnew,ynew,znew;
+	//__shared__ float xnew,ynew,znew;
+	float xnew,ynew,znew;
 	float temp0,temp1,temp2;
 	float dvec[3];
 	float dr;
 	int tid;
 	int cacheIndex = threadIdx.x;
 	int ip = blockIdx.x;
+
 	while (ip < gpu_npart ) {
 		tid = threadIdx.x;
 		temp0 =0;
 		temp1 =0;
 		temp2 =0;
-		while( tid<gpu_npart ) {
-			dvec[0] = Pbc_gpu(tex1Dfetch(texx,ip)-tex1Dfetch(texx,tid)); 
-			dvec[1] = Pbc_gpu(tex1Dfetch(texy,ip)-tex1Dfetch(texy,tid)); 
-			dvec[2] = Pbc_gpu(tex1Dfetch(texz,ip)-tex1Dfetch(texz,tid));
+		while( tid < gpu_npart ) {
+			dvec[0] = Pbc_gpu(x[ip]-x[tid]); 
+			dvec[1] = Pbc_gpu(y[ip]-y[tid]); 
+			dvec[2] = Pbc_gpu(z[ip]-z[tid]);
 			dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
 			if (dr<gpu_rcut && dr>0) {
 				temp0 += dvec[0] * (48.0/pow(dr,14) - 24.0/pow(dr,8)); 
@@ -567,47 +492,60 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 
 	if (cacheIndex == 0) {
 
-		xnew = Pbc_gpu( 2.0 * tex1Dfetch(texx,ip) - tex1Dfetch(texxold,ip) + f0[0] *gpu_delta*gpu_delta);
-		ynew = Pbc_gpu( 2.0 * tex1Dfetch(texy,ip) - tex1Dfetch(texyold,ip) + f1[0] *gpu_delta*gpu_delta);
-		znew = Pbc_gpu( 2.0 * tex1Dfetch(texz,ip) - tex1Dfetch(texzold,ip) + f2[0] *gpu_delta*gpu_delta);
+		xnew = Pbc_gpu( 2.0 * x[ip] - xold[ip] + f0[0] *gpu_delta*gpu_delta );
+		ynew = Pbc_gpu( 2.0 * y[ip] - yold[ip] + f1[0] *gpu_delta*gpu_delta );
+		znew = Pbc_gpu( 2.0 * z[ip] - zold[ip] + f2[0] *gpu_delta*gpu_delta );
 
-		vx[ip] = Pbc_gpu(xnew - tex1Dfetch(texxold,ip)) / (2.0 * gpu_delta);//sbaglia a calcolarle
-    		vy[ip] = Pbc_gpu(ynew - tex1Dfetch(texyold,ip)) / (2.0 * gpu_delta);
-    		vz[ip] = Pbc_gpu(znew - tex1Dfetch(texzold,ip)) / (2.0 * gpu_delta);
+		vx[ip] = Pbc_gpu(xnew - xold[ip]) / (2.0 * gpu_delta);
+    		vy[ip] = Pbc_gpu(ynew - yold[ip]) / (2.0 * gpu_delta);
+    		vz[ip] = Pbc_gpu(znew - zold[ip]) / (2.0 * gpu_delta);
 
-    		xold[ip] = tex1Dfetch(texx,ip);
-    		yold[ip] = tex1Dfetch(texy,ip);
-    		zold[ip] = tex1Dfetch(texz,ip);
+    		xold[ip] = x[ip];
+    		yold[ip] = y[ip];
+    		zold[ip] = z[ip];
 
     		x[ip] = xnew;
    		y[ip] = ynew;
     		z[ip] = znew;
+
 		}
+
 		ip += gridDim.x;
 	}		
 }
 
-__global__ void  measure_kinetic(Lock lock,float *k) {
+__global__ void  measure_kinetic(Lock lock,float*vx,float*vy,float*vz,float *k) {
 
 	*k = 0.0;//energia cinetica
-	__shared__ float kin[th]; 
-	float a=0,b=0,c=0; 
-	int i = threadIdx.x+blockIdx.x*blockDim.x;
+
+	__shared__ float kin[th];
+
+	int cacheIndex = threadIdx.x;
+	int i = threadIdx.x + blockIdx.x*blockDim.x;
+	float a=0,b=0,c=0;
+
 	while (i<gpu_npart) {
-		a += tex1Dfetch(texvx,i)*tex1Dfetch(texvx,i);
-		b += tex1Dfetch(texvy,i)*tex1Dfetch(texvy,i);
-		c += tex1Dfetch(texvz,i)*tex1Dfetch(texvz,i);
+		a += vx[i]*vx[i];
+		b += vy[i]*vy[i];
+		c += vz[i]*vz[i];
 		i += blockDim.x*gridDim.x;
 	}
-	int cacheIndex = threadIdx.x;
+
         kin[cacheIndex] = a+b+c;
 	__syncthreads();
-	int tid = blockDim.x/2.;
+
+	int tid = blockDim.x/2;
 	while(tid !=0) {
-		if(cacheIndex<tid) kin[cacheIndex]+=kin[cacheIndex+tid];
+
+		if(cacheIndex < tid) 
+			kin[cacheIndex]+=kin[cacheIndex+tid];
+
 	__syncthreads();
+
 	tid /= 2;
+
 	}
+
 	if(cacheIndex==0) {
 		lock.lock();
 		*k += kin[0];
@@ -616,7 +554,7 @@ __global__ void  measure_kinetic(Lock lock,float *k) {
 
 }
 
-__global__ void  measure_pot_virial(Lock lock,float *v,float *w,float* hist) {
+__global__ void  measure_pot_virial(Lock lock,float* x,float*y,float*z,float *v,float *w,float* hist) {
 
 	*w = 0.0;//viriale	
 	*v = 0.0;//potenziale	
@@ -633,26 +571,30 @@ __global__ void  measure_pot_virial(Lock lock,float *v,float *w,float* hist) {
 	int j;
 	while (i<gpu_npart-1) {
 		j = i+1+threadIdx.x;
-		__syncthreads();
 		while (j<gpu_npart) {
-			dvec[0] = Pbc_gpu(tex1Dfetch(texx,i)-tex1Dfetch(texx,j));
-                        dvec[1] = Pbc_gpu(tex1Dfetch(texy,i)-tex1Dfetch(texy,j));
-                        dvec[2] = Pbc_gpu(tex1Dfetch(texz,i)-tex1Dfetch(texz,j));
-                        dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
 
+			dvec[0] = Pbc_gpu(x[i]-x[j]);
+                        dvec[1] = Pbc_gpu(y[i]-y[j]);
+                        dvec[2] = Pbc_gpu(z[i]-z[j]);
+                        dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
 			bin = int(dr/gpu_binsize);
 			atomicAdd( &hist[bin],2);
+
                         if ( dr<gpu_rcut ) {
 				temp0 += 4.0/pow(dr,12) - 4.0/pow(dr,6);
                                 temp1 += 16.0/pow(dr,12) - 8.0/pow(dr,6);
 			}
+
 			j+=blockDim.x;
 		}
+
 	i+=gridDim.x;
 	}
+
 	pot[cacheIndex] = temp0;
 	vir[cacheIndex] = temp1;
 	__syncthreads();
+
 	tid = blockDim.x/2.;
 	while (tid!=0) {
 		if(cacheIndex<tid) {
@@ -662,6 +604,7 @@ __global__ void  measure_pot_virial(Lock lock,float *v,float *w,float* hist) {
 	__syncthreads();
 	tid /= 2.;
 	}
+
 	if (cacheIndex == 0) {
 		lock.lock();
 		*v += pot[0];
@@ -675,16 +618,12 @@ void Measure(Particles* P) {
 
  Lock lock;
 
-	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );//metto a 0 gli elementi dell'histogramma della g(r)
 
-	measure_kinetic<<<bl,th>>>(lock,dev_k);
+	measure_kinetic<<<bl,th>>>(lock,P->vx,P->vy,P->vz,dev_k);
 
-	measure_pot_virial<<<bl,th>>>(lock,dev_v,dev_w,dev_hist);
+	measure_pot_virial<<<bl,th>>>(lock,P->x,P->y,P->z,dev_v,dev_w,dev_hist);
 
-	//cudaDeviceSynchronize();
-
-	float v,w,k;
-	float hist[nbins*10];
 	float deltaVr;
         HANDLE_ERROR( cudaMemcpy(hist,dev_hist,nbins*10*sizeof(float),cudaMemcpyDeviceToHost) );
 	for (int i=0;i<nbins;i++) {
@@ -704,6 +643,7 @@ void Measure(Particles* P) {
         stima_etot_gpu = (t+v)/(float)npart+vtail; //Total energy per particle
         stima_press_gpu = rho*stima_temp_gpu+ (w + ptail*(float)npart ) / vol;
 
+	//carico per fare analisi dati con la CPU
         properties_gpu[0].push_back(stima_pot_gpu);
         properties_gpu[1].push_back(stima_kin_gpu);
         properties_gpu[2].push_back(stima_temp_gpu);
@@ -736,110 +676,110 @@ void Print(vector<T> v, string name) {
 
 void print_velocities(Particles* P) {
 
-float * vx = new float [npart];
-float * vy = new float [npart];
-float * vz = new float [npart];
+float * Vx = new float [npart];
+float * Vy = new float [npart];
+float * Vz = new float [npart];
 
-  HANDLE_ERROR( cudaMemcpy(vx,P->dev_vx,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(vy,P->dev_vy,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(vz,P->dev_vz,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Vx,P->vx,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Vy,P->vy,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Vz,P->vz,npart*sizeof(float),cudaMemcpyDeviceToHost));
 
 cout<< "\n";
  cout << "Print actual velocities:" << endl;
 
  for (int i=0; i<npart; ++i){
-    cout << vx[i] << "   " <<  vy[i] << "   " << vz[i] << endl;
+    cout << Vx[i] << "   " <<  Vy[i] << "   " << Vz[i] << endl;
  }
 
 cout<< "\n";
  
 
-delete [] vx;
-delete [] vy;
-delete [] vz;
+delete [] Vx;
+delete [] Vy;
+delete [] Vz;
 }
 
 
 
 void print_old_conf(Particles* P) {
-  float * xold = new float[npart];
-  float * yold = new float[npart];
-  float * zold = new float[npart];
+  float * Xold = new float[npart];
+  float * Yold = new float[npart];
+  float * Zold = new float[npart];
 
-  HANDLE_ERROR( cudaMemcpy(xold,P->dev_xold,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(yold,P->dev_yold,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(zold,P->dev_zold,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Xold,P->xold,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Yold,P->yold,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Zold,P->zold,npart*sizeof(float),cudaMemcpyDeviceToHost));
 
 cout<< "\n";
  cout << "Print actual old configuration" << endl;
 
  for (int i=0; i<npart; ++i){
-    cout << xold[i]/box << "   " <<  yold[i]/box << "   " << zold[i]/box << endl;
+    cout << Xold[i]/box << "   " <<  Yold[i]/box << "   " << Zold[i]/box << endl;
  }
 
 cout<< "\n";
-  delete [] xold;
-  delete [] yold;
-  delete [] zold;
+  delete [] Xold;
+  delete [] Yold;
+  delete [] Zold;
  
-  return;
+
 
 
 }
 
 void print_conf(Particles* P) {
 
-  float * x = new float[npart];
-  float * y = new float[npart];
-  float * z = new float[npart];
+  float * X = new float[npart];
+  float * Y = new float[npart];
+  float * Z = new float[npart];
 
-  HANDLE_ERROR( cudaMemcpy(x,P->dev_x,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(y,P->dev_y,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(z,P->dev_z,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(X,P->x,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Y,P->y,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Z,P->z,npart*sizeof(float),cudaMemcpyDeviceToHost));
  cout<< "\n";
  cout << "Print actual configuration" << endl;
  for (int i=0; i<npart; ++i){
-    cout << x[i]/box << "   " <<  y[i]/box << "   " << z[i]/box << endl;
+    cout << X[i]/box << "   " <<  Y[i]/box << "   " << Z[i]/box << endl;
  }
 
 cout <<"\n";
 
-  delete [] x;
-  delete [] y;
-  delete [] z;
+  delete [] X;
+  delete [] Y;
+  delete [] Z;
  
   return;
 
 }
 
-void ConfFinal(Particles*P){ //Write final configuration
+void ConfFinal(Particles*P){ //Write final configuration, per ricominciare dalla simulazione precedente
 
-  float * xold = new float[npart];
-  float * yold = new float[npart];
-  float * zold = new float[npart];
+  float * Xold = new float[npart];
+  float * Yold = new float[npart];
+  float * Zold = new float[npart];
 
-  HANDLE_ERROR( cudaMemcpy(xold,P->dev_xold,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(yold,P->dev_yold,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(zold,P->dev_zold,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Xold,P->xold,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Yold,P->yold,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Zold,P->zold,npart*sizeof(float),cudaMemcpyDeviceToHost));
 
   ofstream WriteOldConf("config.final",ios::out);
   cout << "Print penultimate configuration in config.final " << endl << endl;
   for (int i=0; i<npart; ++i){
-    WriteOldConf << xold[i]/box << "   " <<  yold[i]/box << "   " << zold[i]/box << endl;
+    WriteOldConf << Xold[i]/box << "   " <<  Yold[i]/box << "   " << Zold[i]/box << endl;
   } 
   WriteOldConf.close();
  
-  delete [] xold;
-  delete [] yold;
-  delete [] zold;
+  delete [] Xold;
+  delete [] Yold;
+  delete [] Zold;
 
-  float * x = new float[npart];
-  float * y = new float[npart];
-  float * z = new float[npart];
+  float * X = new float[npart];
+  float * Y = new float[npart];
+  float * Z = new float[npart];
 
-  HANDLE_ERROR( cudaMemcpy(x,P->dev_x,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(y,P->dev_y,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(z,P->dev_z,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(X,P->x,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Y,P->y,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(Z,P->z,npart*sizeof(float),cudaMemcpyDeviceToHost));
 
 
   ofstream WriteConf("config.0",ios::out);
@@ -847,13 +787,13 @@ void ConfFinal(Particles*P){ //Write final configuration
   cout << "Print final configuration to file config.0 " << endl << endl;
   WriteConf << npart << endl;
   for (int i=0; i<npart; ++i){
-    WriteConf << x[i]/box << "   " <<  y[i]/box << "   " << z[i]/box << endl;
+    WriteConf << X[i]/box << "   " <<  Y[i]/box << "   " << Z[i]/box << endl;
   }
   WriteConf.close();
 
-  delete [] x;
-  delete [] y;
-  delete [] z;
+  delete [] X;
+  delete [] Y;
+  delete [] Z;
 
 }
 
@@ -882,12 +822,14 @@ vector<float> data(2);
 	 j++;
 	 v_mean.clear();
  }
+
  accettazione = 2*data[1];
  m_temp = data[0];
+ //fatta l'analisi dati controllo a che temperatura si trova il sistema
  cout << "temperatura di ora: " << data[0] << " , con incertezza: " << data[1]<< endl;
- v_mean.clear();
- // radial correlation function
- 
+ v_mean.clear(); 
+
+ // radial correlation function 
  string gdir_name = "output.gave.out";
  ofstream Gave(gdir_name,ios::out);
  
