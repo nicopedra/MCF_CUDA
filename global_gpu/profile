@@ -1,43 +1,41 @@
 UNA SINGOLA SIMULAZIONE SOLIDO , 108 PARTICELLE, 10'000 STEP
 
-TEMPO TOTALE ESECUZIONE : 1112.7 ms
+TEMPO TOTALE ESECUZIONE : 946.3  ms
 
-NUMERO DI BLOCCHI 32 , NUMERO DI THREADS PER BLOCCO 256
+NUMERO DI BLOCCHI 64 , NUMERO DI THREADS PER BLOCCO 128
 
 ######################################## NVPROF ################################
 
-==1959== Profiling application: ./MolDyn_NVE.x 0
-==1959== Profiling result:
+==6923== Profiling application: ./MolDyn_NVE.x 0
+==6923== Profiling result:
 Time(%)      Time     Calls       Avg       Min       Max  Name
- 87.37%  722.61ms     10000  72.261us  68.238us  73.889us  verlet_gpu(float*, float*, float*, float*, float*, float*, float*, float*, float*)
-  7.54%  62.397ms      1001  62.335us  59.589us  66.627us  measure_pot_virial(Lock, float*, float*, float*, float*, float*, float*)
-  3.25%  26.874ms      1001  26.846us  25.217us  28.903us  measure_kinetic(Lock, float*, float*, float*, float*)
-  1.34%  11.073ms      4010  2.7610us  2.7200us  23.329us  [CUDA memcpy DtoH]
-  0.50%  4.1063ms      2002  2.0510us  1.4400us  23.489us  [CUDA memset]
-  0.00%  20.768us        14  1.4830us  1.4400us  1.6640us  [CUDA memcpy HtoD]
+ 75.76%  501.22ms     10000  50.122us  47.707us  51.920us  verlet_gpu(float*, float*, float*, float*, float*, float*, float*, float*, float*)
+ 12.91%  85.443ms      1001  85.357us  82.860us  89.747us  measure_pot_virial(Lock, float*, float*, float*, float*, float*, float*)
+  8.18%  54.123ms      1001  54.069us  51.269us  58.017us  measure_kinetic(Lock, float*, float*, float*, float*)
+  1.69%  11.187ms      4010  2.7890us  2.7200us  13.088us  [CUDA memcpy DtoH]
+  1.45%  9.5876ms      5005  1.9150us  1.7920us  12.672us  [CUDA memset]
+  0.01%  36.512us        14  2.6080us  1.7920us  12.608us  [CUDA memcpy HtoD]
 
-==1959== API calls:
+==6923== API calls:
 Time(%)      Time     Calls       Avg       Min       Max  Name
- 55.15%  599.94ms      3016  198.92us  1.8640us  645.92us  cudaFree
- 14.28%  155.28ms      1014  153.14us  8.7030us  140.39ms  cudaMalloc
- 13.50%  146.87ms      4019  36.544us  10.218us  116.96us  cudaMemcpy
- 11.19%  121.76ms     12002  10.144us  8.7630us  558.18us  cudaLaunch
-  2.61%  28.418ms    102012     278ns     231ns  548.10us  cudaSetupArgument
-  2.32%  25.264ms      2002  12.619us  9.9760us  85.045us  cudaMemset
-  0.53%  5.7193ms     12002     476ns     354ns  537.71us  cudaConfigureCall
-  0.32%  3.5240ms       364  9.6810us     285ns  421.47us  cuDeviceGetAttribute
-  0.04%  422.39us         4  105.60us  81.017us  176.67us  cuDeviceTotalMem
-  0.04%  396.64us         4  99.159us  83.451us  125.71us  cuDeviceGetName
-  0.01%  63.539us         5  12.707us  10.202us  18.574us  cudaMemcpyToSymbol
-  0.00%  31.885us         2  15.942us  7.4790us  24.406us  cudaEventRecord
-  0.00%  24.005us         1  24.005us  24.005us  24.005us  cudaSetDevice
-  0.00%  8.4540us         2  4.2270us  1.3010us  7.1530us  cudaEventCreate
-  0.00%  8.3440us        12     695ns     283ns  2.7220us  cuDeviceGet
-  0.00%  6.7590us         1  6.7590us  6.7590us  6.7590us  cudaEventSynchronize
-  0.00%  4.1600us         1  4.1600us  4.1600us  4.1600us  cudaEventElapsedTime
-  0.00%  4.0540us         3  1.3510us     484ns  2.7810us  cuDeviceGetCount
-
-
+ 42.14%  394.96ms      3016  130.96us  1.8150us  430.08us  cudaFree
+ 18.54%  173.81ms      4019  43.247us  11.284us  126.81us  cudaMemcpy
+ 16.42%  153.87ms      1014  151.74us  9.7190us  139.03ms  cudaMalloc
+ 12.83%  120.25ms     12002  10.018us  8.4980us  611.49us  cudaLaunch
+  5.93%  55.583ms      5005  11.105us  9.3820us  28.970us  cudaMemset
+  3.05%  28.635ms    102012     280ns     232ns  563.45us  cudaSetupArgument
+  0.63%  5.8917ms     12002     490ns     352ns  539.31us  cudaConfigureCall
+  0.36%  3.4140ms       364  9.3790us     270ns  402.02us  cuDeviceGetAttribute
+  0.04%  421.30us         4  105.33us  82.178us  168.20us  cuDeviceTotalMem
+  0.04%  330.41us         4  82.602us  76.753us  93.747us  cuDeviceGetName
+  0.01%  94.121us         5  18.824us  12.350us  33.885us  cudaMemcpyToSymbol
+  0.00%  33.511us         2  16.755us  8.2300us  25.281us  cudaEventRecord
+  0.00%  22.666us         1  22.666us  22.666us  22.666us  cudaSetDevice
+  0.00%  10.069us         2  5.0340us  1.5240us  8.5450us  cudaEventCreate
+  0.00%  8.0570us        12     671ns     266ns  2.7680us  cuDeviceGet
+  0.00%  6.5750us         1  6.5750us  6.5750us  6.5750us  cudaEventSynchronize
+  0.00%  4.0520us         1  4.0520us  4.0520us  4.0520us  cudaEventElapsedTime
+  0.00%  3.7100us         3  1.2360us     457ns  2.3080us  cuDeviceGetCount
 
 ################################### GPROF ###################################################
 
@@ -45,16 +43,17 @@ Flat profile:
 
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
- time   seconds   seconds    calls  us/call  us/call  name    
-100.02      0.01     0.01      101    99.03    99.03  last_data_from_datablocking(int, std::vector<float, std::allocator<float> >)
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+100.02      0.01     0.01                             Measure(Particles*)
   0.00      0.01     0.00     2804     0.00     0.00  void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float>(float&&)
   0.00      0.01     0.00     1001     0.00     0.00  __device_stub__Z18measure_pot_virial4LockPfS0_S0_S0_S0_S0_(Lock&, float*, float*, float*, float*, float*, float*)
+  0.00      0.01     0.00      101     0.00     0.00  last_data_from_datablocking(int, std::vector<float, std::allocator<float> >)
   0.00      0.01     0.00       55     0.00     0.00  void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float const&>(float const&)
   0.00      0.01     0.00       10     0.00     0.00  std::string __gnu_cxx::__to_xstring<std::string, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...) [clone .constprop.85]
   0.00      0.01     0.00        5     0.00     0.00  data_blocking(int, std::vector<float, std::allocator<float> >, float, std::string)
   0.00      0.01     0.00        5     0.00     0.00  void Print<float>(std::vector<float, std::allocator<float> >, std::string)
   0.00      0.01     0.00        1     0.00     0.00  _GLOBAL__sub_I_n_props
-  0.00      0.01     0.00        1     0.00     0.00  __sti____cudaRegisterAll_45_tmpxft_0000077c_00000000_9_MolDyn_NVE_cpp1_ii_gdir()
+  0.00      0.01     0.00        1     0.00     0.00  __sti____cudaRegisterAll_45_tmpxft_00001aaf_00000000_9_MolDyn_NVE_cpp1_ii_gdir()
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -97,45 +96,44 @@ notice and this notice are preserved.
 granularity: each sample hit covers 2 byte(s) for 99.98% of 0.01 seconds
 
 index % time    self  children    called     name
-                0.01    0.00     101/101         data_blocking_MD(int) [2]
-[1]    100.0    0.01    0.00     101         last_data_from_datablocking(int, std::vector<float, std::allocator<float> >) [1]
-                0.00    0.00    1616/2804        void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float>(float&&) [10]
------------------------------------------------
                                                  <spontaneous>
-[2]    100.0    0.00    0.01                 data_blocking_MD(int) [2]
-                0.01    0.00     101/101         last_data_from_datablocking(int, std::vector<float, std::allocator<float> >) [1]
-                0.00    0.00       8/2804        void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float>(float&&) [10]
-                0.00    0.00       5/10          std::string __gnu_cxx::__to_xstring<std::string, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...) [clone .constprop.85] [13]
-                0.00    0.00       5/5           data_blocking(int, std::vector<float, std::allocator<float> >, float, std::string) [14]
+[1]    100.0    0.01    0.00                 Measure(Particles*) [1]
+                0.00    0.00    1100/2804        void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float>(float&&) [9]
+                0.00    0.00    1001/1001        __device_stub__Z18measure_pot_virial4LockPfS0_S0_S0_S0_S0_(Lock&, float*, float*, float*, float*, float*, float*) [10]
+                0.00    0.00      55/55          void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float const&>(float const&) [12]
 -----------------------------------------------
-                0.00    0.00       8/2804        data_blocking_MD(int) [2]
+                0.00    0.00       8/2804        data_blocking_MD(int) [23]
                 0.00    0.00      80/2804        data_blocking(int, std::vector<float, std::allocator<float> >, float, std::string) [14]
-                0.00    0.00    1100/2804        Measure(Particles*) [35]
-                0.00    0.00    1616/2804        last_data_from_datablocking(int, std::vector<float, std::allocator<float> >) [1]
-[10]     0.0    0.00    0.00    2804         void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float>(float&&) [10]
+                0.00    0.00    1100/2804        Measure(Particles*) [1]
+                0.00    0.00    1616/2804        last_data_from_datablocking(int, std::vector<float, std::allocator<float> >) [11]
+[9]      0.0    0.00    0.00    2804         void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float>(float&&) [9]
 -----------------------------------------------
-                0.00    0.00    1001/1001        Measure(Particles*) [35]
-[11]     0.0    0.00    0.00    1001         __device_stub__Z18measure_pot_virial4LockPfS0_S0_S0_S0_S0_(Lock&, float*, float*, float*, float*, float*, float*) [11]
+                0.00    0.00    1001/1001        Measure(Particles*) [1]
+[10]     0.0    0.00    0.00    1001         __device_stub__Z18measure_pot_virial4LockPfS0_S0_S0_S0_S0_(Lock&, float*, float*, float*, float*, float*, float*) [10]
 -----------------------------------------------
-                0.00    0.00      55/55          Measure(Particles*) [35]
+                0.00    0.00     101/101         data_blocking_MD(int) [23]
+[11]     0.0    0.00    0.00     101         last_data_from_datablocking(int, std::vector<float, std::allocator<float> >) [11]
+                0.00    0.00    1616/2804        void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float>(float&&) [9]
+-----------------------------------------------
+                0.00    0.00      55/55          Measure(Particles*) [1]
 [12]     0.0    0.00    0.00      55         void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float const&>(float const&) [12]
 -----------------------------------------------
-                0.00    0.00       5/10          print_properties() [23]
-                0.00    0.00       5/10          data_blocking_MD(int) [2]
+                0.00    0.00       5/10          print_properties() [24]
+                0.00    0.00       5/10          data_blocking_MD(int) [23]
 [13]     0.0    0.00    0.00      10         std::string __gnu_cxx::__to_xstring<std::string, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...) [clone .constprop.85] [13]
 -----------------------------------------------
-                0.00    0.00       5/5           data_blocking_MD(int) [2]
+                0.00    0.00       5/5           data_blocking_MD(int) [23]
 [14]     0.0    0.00    0.00       5         data_blocking(int, std::vector<float, std::allocator<float> >, float, std::string) [14]
-                0.00    0.00      80/2804        void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float>(float&&) [10]
+                0.00    0.00      80/2804        void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float>(float&&) [9]
 -----------------------------------------------
-                0.00    0.00       5/5           print_properties() [23]
+                0.00    0.00       5/5           print_properties() [24]
 [15]     0.0    0.00    0.00       5         void Print<float>(std::vector<float, std::allocator<float> >, std::string) [15]
 -----------------------------------------------
                 0.00    0.00       1/1           __libc_csu_init [49]
 [16]     0.0    0.00    0.00       1         _GLOBAL__sub_I_n_props [16]
 -----------------------------------------------
                 0.00    0.00       1/1           __libc_csu_init [49]
-[17]     0.0    0.00    0.00       1         __sti____cudaRegisterAll_45_tmpxft_0000077c_00000000_9_MolDyn_NVE_cpp1_ii_gdir() [17]
+[17]     0.0    0.00    0.00       1         __sti____cudaRegisterAll_45_tmpxft_00001aaf_00000000_9_MolDyn_NVE_cpp1_ii_gdir() [17]
 -----------------------------------------------
 
  This table describes the call tree of the program, and was sorted by

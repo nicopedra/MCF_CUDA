@@ -11,7 +11,7 @@
 #include "lock.h"
 #include "book.h"
 
-#define bl 32 
+#define bl 512 
 #define th 256  
 using namespace std;
 
@@ -123,6 +123,7 @@ void Move_gpu(Particles*);
 void print_device_properties();
 
 __global__ void  measure_pot_virial(Lock lock,float*,float*,float*,float*,float*,float*);
+
 __global__ void  measure_kinetic(Lock lock,float*,float*,float*,float*);
 
 void print_velocities(Particles*);
@@ -516,8 +517,6 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 
 __global__ void  measure_kinetic(Lock lock,float*vx,float*vy,float*vz,float *k) {
 
-	*k = 0.0;//energia cinetica
-
 	__shared__ float kin[th];
 
 	int cacheIndex = threadIdx.x;
@@ -555,9 +554,7 @@ __global__ void  measure_kinetic(Lock lock,float*vx,float*vy,float*vz,float *k) 
 }
 
 __global__ void  measure_pot_virial(Lock lock,float* x,float*y,float*z,float *v,float *w,float* hist) {
-
-	*w = 0.0;//viriale	
-	*v = 0.0;//potenziale	
+	
 	__shared__ float pot[th];
 	__shared__ float vir[th];
 	float temp0=0;
@@ -618,7 +615,10 @@ void Measure(Particles* P) {
 
  Lock lock;
 
-	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );//metto a 0 gli elementi dell'histogramma della g(r)
+	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_k,0, sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_v,0, sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_w,0, sizeof(float)  ) );
 
 	measure_kinetic<<<bl,th>>>(lock,P->vx,P->vy,P->vz,dev_k);
 

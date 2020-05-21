@@ -11,8 +11,9 @@
 #include "lock.h"
 //#include <stdio.h>
 
-#define bl 32 
-#define th 256 //con questi numeri mi sbaglia v e w ma non k e non temp finale 
+//numero ottimale
+#define bl 64 
+#define th 128 
 using namespace std;
 
 //parameters, observables
@@ -118,6 +119,7 @@ void Move_gpu(Particles*);
 void print_device_properties();
 
 __global__ void  measure_pot_virial(Lock lock,float*,float*,float*);
+
 __global__ void  measure_kinetic(Lock lock,float*);
 
 void print_velocities(Particles*);
@@ -182,6 +184,11 @@ void print_device_properties() {
 
 void Input(Particles* P){ //Prepare all stuff for the simulation
   ifstream ReadInput,ReadConf,ReadPrecedentConf;
+
+  cout << "using " << bl << " blocksPerGrid" << endl;
+  cout << "using " << th << " threadsPerBlock "<< endl;
+  cout << endl;
+
 
   cout << "Classic Lennard-Jones fluid        " << endl;
   cout << "Molecular dynamics simulation in NVE ensemble  " << endl << endl;
@@ -526,7 +533,8 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 	__shared__ float f0[th];
 	__shared__ float f1[th];
 	__shared__ float f2[th];
-	__shared__ float xnew,ynew,znew;
+	//__shared__ float xnew,ynew,znew;
+	float xnew,ynew,znew;
 	float temp0,temp1,temp2;
 	float dvec[3];
 	float dr;
@@ -589,7 +597,6 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 
 __global__ void  measure_kinetic(Lock lock,float *k) {
 
-	*k = 0.0;//energia cinetica
 	__shared__ float kin[th]; 
 	float a=0,b=0,c=0; 
 	int i = threadIdx.x+blockIdx.x*blockDim.x;
@@ -618,8 +625,6 @@ __global__ void  measure_kinetic(Lock lock,float *k) {
 
 __global__ void  measure_pot_virial(Lock lock,float *v,float *w,float* hist) {
 
-	*w = 0.0;//viriale	
-	*v = 0.0;//potenziale	
 	__shared__ float pot[th];
 	__shared__ float vir[th];
 	float temp0=0;
@@ -676,9 +681,11 @@ void Measure(Particles* P) {
  Lock lock;
 
 	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_k,0, sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_v,0, sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_w,0, sizeof(float)  ) );
 
 	measure_kinetic<<<bl,th>>>(lock,dev_k);
-
 	measure_pot_virial<<<bl,th>>>(lock,dev_v,dev_w,dev_hist);
 
 	//cudaDeviceSynchronize();

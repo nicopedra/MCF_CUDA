@@ -10,8 +10,8 @@
 #include <cuda.h>
 #include "lock.h"
 
-#define th 256
-#define bl 32
+#define th 128
+#define bl 64
 
 using namespace std;
 
@@ -177,7 +177,9 @@ void print_device_properties() {
 
 void Input(Particles* P){ //Prepare all stuff for the simulation
   ifstream ReadInput,ReadConf,ReadPrecedentConf;
-
+  cout << "using " << bl << " blocksPerGrid" << endl;
+  cout << "using " << th << " threadsPerBlock" << endl;
+  cout << endl;
   cout << "Classic Lennard-Jones fluid        " << endl;
   cout << "Molecular dynamics simulation in NVE ensemble  " << endl << endl;
   cout << "Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]" <<"\n"<<"\n";
@@ -548,14 +550,14 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 
 __global__ void  measure_kinetic(Lock lock,float*vx,float*vy,float*vz,float *k) {
 
-	*k = 0.0;//energia cinetica
+	
 
 	__shared__ float kin[th];
 
 	int cacheIndex = threadIdx.x;
 	int i = threadIdx.x + blockIdx.x*blockDim.x;
 	float a=0,b=0,c=0;
-	//printf("c %d", gpu_npart);
+	
 	while (i < gpu_npart ) {
 		a += vx[i]*vx[i];
 		b += vy[i]*vy[i];
@@ -588,8 +590,7 @@ __global__ void  measure_kinetic(Lock lock,float*vx,float*vy,float*vz,float *k) 
 
 __global__ void  measure_pot_virial(Lock lock,float* x,float*y,float*z,float *v,float *w,float* hist) {
 
-	*w = 0.0;//viriale	
-	*v = 0.0;//potenziale	
+		
 	__shared__ float pot[th];
 	__shared__ float vir[th];
 	float temp0=0;
@@ -650,7 +651,10 @@ void Measure(Particles* P) {
 
  Lock lock;
 
-	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );//metto a 0 gli elementi dell'histogramma della g(r)
+	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_k,0, sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_v,0, sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_w,0, sizeof(float)  ) );
 
 	measure_kinetic<<<bl,th>>>(lock,P->dev_vx,P->dev_vy,P->dev_vz,dev_k);
 
