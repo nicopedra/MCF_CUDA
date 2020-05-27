@@ -2,7 +2,7 @@
 
 ### numero particelle 4000 (max)  
     
-cudaSetDevice(0)  
+**cudaSetDevice(0)**  
 
 test 1    
 |:--------------------------------------------:|
