@@ -30,13 +30,16 @@ A questo punto tramite il comando cudaMemcpy si copiano i valori ricavati sulla 
 Ora si esegue un ciclo for su tutti gli step di simulazione che si vogliono eseguire.  
 - La prima operazione del ciclo è la chiamata alla funzione Move(). Questa funzione chiama la funzione __global__ verlet_gpu() che evolve le coordinate tramite l'integratore di Verlet.  
 Tale funzione segue la logica dell'*Atom Decomposition*, ovvero ogni blocco, con i suoi threads, si occupa di calcolare la forza relativa a una singola particella e a eseguire l'evoluzione di tale particella. (per cui l'indice di blocco rappresenta la coordinate della particella che subisce la forza dovuta alla presenza di tutte le altre particelle (rappresentate dagli indici di thread di quel blocco) ).  
-- La seconda operazione è calcolare ogni 10 step le grandezze fisiche istantanee: 
-	* energia cinetica per particella (teorema di equipartizione)
-	* energia potenziale per particella (con correzione vtail dovuta al raggiu di cut off)
-	* energia totale per particella (che deve restare costante durante una singola simulazione)
-	* temperatura del sistema
-	* pressione 
-	* pair radial correlation function g(r)  
-- 
+- La seconda operazione è calcolare ogni 10 step le grandezze fisiche istantanee chiamando la funzione Measure: 
+	^ energia cinetica per particella (teorema di equipartizione)
+	^ energia potenziale per particella (con correzione vtail dovuta al raggiu di cut off)
+	^ energia totale per particella (che deve restare costante durante una singola simulazione)
+	^ temperatura del sistema
+	^ pressione (con correzione ptail)
+	^ pair radial correlation function g(r)  
+Per calcolare queste grandezze vengono chiamate due funzioni __global__:   
+	^ La prima relativa al calcolo dell'energia cinetica totale (è semplicemente un prodotto scalare)   
+	^ La seconda calcola il viriale e l'energia potenziale delle particelle, e riempie l'istrogramma relativo alla g(r). Questa funzione è molto simile come metodo alla funzione *verlet_gpu()* poichè è necessario calcolare la distanza tra una particella e tutte le altre. Per cui l'indice della prima particella è l'indice di blocco, mentre l'indice della seconda particella è l'indice di thread.  
+Per queste funzioni è stato necessario utilizzare la *struct Lock*, che tramite l'utilizzo della sua variabile *mutex* permette l'esecuzione di un thread per volta (operazione necessaria per sommare tra loro le somme parziali per il prodotto scalare e il calcolo dell'energia potenziale e il viriale). Per riempire l'istogramma è stato necessario invece usare la funzione API di Cuda *atomicAdd()* (per non sovrascrivere conteggi e quindi rischiare dicontare di meno).
     
 
