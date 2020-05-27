@@ -11,16 +11,16 @@ int main(int argc, char** argv){
   m_temp=0;
   int N;
   accettazione = 0.001;
-  float errore = abs(m_temp-temp); 
+  double errore = abs(m_temp-temp); 
   Particles P;
   Input(&P); 
 
   //assign symbol to costant memory
   HANDLE_ERROR(cudaMemcpyToSymbol(gpu_npart, &npart, sizeof(int)));
-  HANDLE_ERROR(cudaMemcpyToSymbol(gpu_box, &box, sizeof(float)));
-  HANDLE_ERROR(cudaMemcpyToSymbol(gpu_binsize, &bin_size, sizeof(float)));
-  HANDLE_ERROR(cudaMemcpyToSymbol(gpu_delta, &delta, sizeof(float)));
-  HANDLE_ERROR(cudaMemcpyToSymbol(gpu_rcut, &rcut, sizeof(float)));
+  HANDLE_ERROR(cudaMemcpyToSymbol(gpu_box, &box, sizeof(double)));
+  HANDLE_ERROR(cudaMemcpyToSymbol(gpu_binsize, &bin_size, sizeof(double)));
+  HANDLE_ERROR(cudaMemcpyToSymbol(gpu_delta, &delta, sizeof(double)));
+  HANDLE_ERROR(cudaMemcpyToSymbol(gpu_rcut, &rcut, sizeof(double)));
 
 #ifdef equilibration
   cout << "equilibration phase! " << endl;

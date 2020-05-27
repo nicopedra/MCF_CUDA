@@ -1,7 +1,7 @@
 #include <stdlib.h>     // srand, rand: to generate random number
-#include <iostream>     
-#include <fstream>      
-#include <cmath>        
+#include <iostream>
+#include <fstream>
+#include <cmath>
 #include <vector>
 #include <cstdio>
 #include <cuda_runtime.h>
@@ -22,67 +22,77 @@ string file_start;
 const int m_props=5;
 const int nbins=100;
 //tail corrections
-float vtail;
-float ptail;
+double vtail;
+double ptail;
 //mean temperature from data analysis
-float m_temp;
-float accettazione;
+double m_temp;
+double accettazione;
 //useful for measurement
-float bin_size;
-vector<vector<float>> gdir(nbins);
-float stima_pot_gpu, stima_kin_gpu, stima_etot_gpu, stima_temp_gpu,stima_press_gpu;
-vector<vector<float>> properties_gpu(m_props);
+double bin_size;
+vector<vector<double>> gdir(nbins);
+double stima_pot_gpu, stima_kin_gpu, stima_etot_gpu, stima_temp_gpu,stima_press_gpu;
+vector<vector<double>> properties_gpu(m_props);
 
 int restart;
-//texture memory, read-only memory
-	texture<float> texx;
-	texture<float> texy;
-	texture<float> texz;
-	texture<float> texxold;
-	texture<float> texyold;
-	texture<float> texzold;
-	texture<float> texvx;
-	texture<float> texvy;
-	texture<float> texvz;
+
+	texture<int2,1> texx;
+	texture<int2,1> texy;
+	texture<int2,1> texz;
+	texture<int2,1> texxold;
+	texture<int2,1> texyold;
+	texture<int2,1> texzold;
+	texture<int2,1> texvx;
+	texture<int2,1> texvy;
+	texture<int2,1> texvz;
+
+//fetch but in double precision
+static __inline__ __device__ double fetch_double(texture<int2, 1> t, int i)
+
+{
+
+	int2 v = tex1Dfetch(t,i);
+
+	return __hiloint2double(v.y, v.x);
+
+}
 
 // thermodynamical state
 int npart;
-float energy,temp,vol,rho,box,rcut;
+double energy,temp,vol,rho,box,rcut;
 
 //using to calculate the physical properties on the gpu
-float *dev_w,*dev_v,*dev_k; //virial, potential, kinetic 
-float* dev_hist;// g(r)
-
-//allocate costant memory
-__constant__ int gpu_npart;
-__constant__ float gpu_binsize;
-__constant__ float gpu_rcut;
-__constant__ float gpu_delta;
-__constant__ float gpu_box;
+double *dev_w,*dev_v,*dev_k; //virial, potential, kinetic 
+double* dev_hist;// g(r)
 
 // simulation
 int nstep, iprint, seed;
-float delta;
+double delta;
+
+//allocate costant memory
+__constant__ int gpu_npart;
+__constant__ double gpu_binsize;
+__constant__ double gpu_rcut;
+__constant__ double gpu_delta;
+__constant__ double gpu_box;
 
 //structures
 struct Particles {
 
-	float* x;
-	float* y;
-	float* z;
-	float* xold;
-	float* yold;
-	float* zold;
-	float* vx;
-	float* vy;
-	float* vz;
+	double* x;
+	double* y;
+	double* z;
+	double* xold;
+	double* yold;
+	double* zold;
+	double* vx;
+	double* vy;
+	double* vz;
 	float TotalTime;
 	cudaEvent_t start,stop;
 
 };
 
 //################### functions ####################
-
 //reading parameters from input.dat
 //allocating memory on gpu
 void Input(Particles*);
@@ -97,22 +107,22 @@ void exit(Particles*);
 void ConfFinal(Particles*);
 
 //Periodic boundary condition
-float Pbc(float);
+double Pbc(double);
 
 void print_properties();
 
 template <typename T>
 void Print(vector<T>,string);
 
-float error(vector<float>,vector<float>,int);
+double error(vector<double>,vector<double>,int);
 
 //data analysis method
-void data_blocking(int,vector<float>,float,string);
+void data_blocking(int,vector<double>,double,string);
 
 //last data from the analysis
-vector<float> last_data_from_datablocking(int,vector<float>);
+vector<double> last_data_from_datablocking(int,vector<double>);
 
-float mean_v(vector<float>,int,int = 0);
+double mean_v(vector<double>,int,int = 0);
 
 //data analysis
 void data_blocking_MD(int);
@@ -124,28 +134,49 @@ void print_old_conf(Particles*);
 void print_velocities(Particles*);
 
 //useful if restart = 1, to do the first step 
-void first_move(float*,float*,float*,float*,float*,float*,float*,float*,float*);
+void first_move(double*,double*,double*,double*,double*,double*,double*,double*,double*);
 
-float Force_cpu(float*,float*,float*,int,int);
+double Force_cpu(double*,double*,double*,int,int);
 
 //################# Global functions ########################
 
-__global__ void verlet_gpu(float*,float*,float*,float*,float*,float*,float*,float*,float*);
+__global__ void verlet_gpu(double*,double*,double*,double*,double*,double*,double*,double*,double*);
 
 //Periodic boundary condition
-__device__ float Pbc_gpu(float); 
+__device__ double Pbc_gpu(double); 
 
 void Move_gpu(Particles*);
  
 void print_device_properties();
 
-__global__ void  measure_pot_virial(Lock lock,float*,float*,float*);
+__global__ void  measure_pot_virial(Lock lock,double*,double*,double*);
 
-__global__ void  measure_kinetic(Lock lock,float*);
+__global__ void  measure_kinetic(Lock lock,double*);
 
 void Measure(Particles*);
 
 //########################### IMPLEMENTAZIONI #################################
+
+//atomicAdd but in double precision.. not avaible in this capability device of Cuda
+#if __CUDA_ARCH__ < 600
+__device__ double AtomicAdd(double* address, double val)
+{
+    unsigned long long int* address_as_ull =
+                              (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val +
+                               __longlong_as_double(assumed)));
+
+    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+      } while (assumed != old);
+            
+             return __longlong_as_double(old);
+   		}
+#endif
 
 //useful to understand allocating memory errors!
 static void HandleError( cudaError_t err,
@@ -227,7 +258,7 @@ void Input(Particles* P){ //Prepare all stuff for the simulation
   cout << "Number of particles = " << npart << endl;
   ReadInput >> rho;
   cout << "Density of particles = " << rho << endl;
-  vol = (float)npart/rho;
+  vol = (double)npart/rho;
   cout << "Volume of the simulation box = " << vol << endl;
   box = pow(vol,1.0/3.0);
   cout << "Edge of the simulation box = " << box << endl;//unità sigma
@@ -252,58 +283,58 @@ void Input(Particles* P){ //Prepare all stuff for the simulation
 
 //allocate memory on global memory
  HANDLE_ERROR( cudaMalloc( (void**)&P->x,
-                              npart*sizeof(float) ) );
+                              npart*sizeof(double) ) );
  HANDLE_ERROR( cudaMalloc( (void**)&P->y,
-                              npart*sizeof(float) ) );
+                              npart*sizeof(double) ) );
  HANDLE_ERROR( cudaMalloc( (void**)&P->z,
-                              npart*sizeof(float) ) );
+                              npart*sizeof(double) ) );
  HANDLE_ERROR( cudaMalloc( (void**)&P->xold,
-                              npart*sizeof(float) ) );
+                              npart*sizeof(double) ) );
  HANDLE_ERROR( cudaMalloc( (void**)&P->yold,
-                              npart*sizeof(float) ) );
+                              npart*sizeof(double) ) );
  HANDLE_ERROR( cudaMalloc( (void**)&P->zold,
-                              npart*sizeof(float) ) );
+                              npart*sizeof(double) ) );
  HANDLE_ERROR( cudaMalloc( (void**)&P->vx,
-                              npart*sizeof(float) ) );
+                              npart*sizeof(double) ) );
  HANDLE_ERROR( cudaMalloc( (void**)&P->vy,
-                              npart*sizeof(float) ) );
+                              npart*sizeof(double) ) );
  HANDLE_ERROR( cudaMalloc( (void**)&P->vz,
-                              npart*sizeof(float) ) );
+                              npart*sizeof(double) ) );
 
 //bind texture memory
  HANDLE_ERROR( cudaBindTexture( NULL, texx,
                                    P->x,
-                                   npart*sizeof(float) ) );
+                                   npart*sizeof(double) ) );
  HANDLE_ERROR( cudaBindTexture( NULL, texy,
                                    P->y,
-                                   npart*sizeof(float) ) );
+                                   npart*sizeof(double) ) );
  HANDLE_ERROR( cudaBindTexture( NULL, texz,
                                    P->z,
-                                   npart*sizeof(float) ) );
+                                   npart*sizeof(double) ) );
  HANDLE_ERROR( cudaBindTexture( NULL, texxold,
                                    P->xold,
-                                   npart*sizeof(float) ) );
+                                   npart*sizeof(double) ) );
  HANDLE_ERROR( cudaBindTexture( NULL, texyold,
                                    P->yold,
-                                   npart*sizeof(float) ) );
+                                   npart*sizeof(double) ) );
  HANDLE_ERROR( cudaBindTexture( NULL, texzold,
                                    P->zold,
-                                   npart*sizeof(float) ) );
+                                   npart*sizeof(double) ) );
  HANDLE_ERROR( cudaBindTexture( NULL, texvx,
                                    P->vx,
-                                   npart*sizeof(float) ) );
+                                   npart*sizeof(double) ) );
  HANDLE_ERROR( cudaBindTexture( NULL, texvy,
                                    P->vy,
-                                   npart*sizeof(float) ) );
+                                   npart*sizeof(double) ) );
  HANDLE_ERROR( cudaBindTexture( NULL, texvz,
                                    P->vz,
-                                   npart*sizeof(float) ) );
+                                   npart*sizeof(double) ) );
 
 //allocate global memory on the gpu
- HANDLE_ERROR( cudaMalloc( (void**)&dev_w, sizeof(float)  ) );
- HANDLE_ERROR( cudaMalloc( (void**)&dev_v, sizeof(float)  ) );
- HANDLE_ERROR( cudaMalloc( (void**)&dev_k, sizeof(float)  ) );
- HANDLE_ERROR( cudaMalloc( (void**)&dev_hist, nbins*10*sizeof(float)  ) );
+ HANDLE_ERROR( cudaMalloc( (void**)&dev_w, sizeof(double)  ) );
+ HANDLE_ERROR( cudaMalloc( (void**)&dev_v, sizeof(double)  ) );
+ HANDLE_ERROR( cudaMalloc( (void**)&dev_k, sizeof(double)  ) );
+ HANDLE_ERROR( cudaMalloc( (void**)&dev_hist, nbins*10*sizeof(double)  ) );
 
    return;
 }
@@ -326,15 +357,15 @@ if(restart == 1) {
           ReadConf >> npart;
 }
 
-float* x = new float[npart];
-float* y = new float[npart];
-float* z = new float[npart];
-float* xold = new float[npart];
-float* yold = new float[npart];
-float* zold = new float[npart];
-float* vx = new float[npart];
-float* vy = new float[npart];
-float* vz = new float[npart];
+double* x = new double[npart];
+double* y = new double[npart];
+double* z = new double[npart];
+double* xold = new double[npart];
+double* yold = new double[npart];
+double* zold = new double[npart];
+double* vx = new double[npart];
+double* vy = new double[npart];
+double* vz = new double[npart];
 		
 //Read initial configuration
   cout << "Read initial configuration from file "+file_start << endl << endl;
@@ -356,7 +387,7 @@ if(restart == 1) {
   	}
 	cout << endl;
   	ReadPrecedentConf.close();
-	float sumv2=0.0,fs;
+	double sumv2=0.0,fs;
 	first_move(x,y,z,xold,yold,zold,vx,vy,vz);
 	for (int i=0; i<npart; ++i){
 	vx[i] = Pbc(x[i] - xold[i])/(delta);
@@ -365,8 +396,8 @@ if(restart == 1) {
 	sumv2 += vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i];
 	}
 	cout << endl;
-	sumv2 /= (float)npart;
-	float T = sumv2/3.;//from the equipartion theorem
+	sumv2 /= (double)npart;
+	double T = sumv2/3.;//from the equipartion theorem
 	fs = sqrt(temp/T);//scale factor
 	cout << "scale factor: " << endl;
 	cout << fs << endl;
@@ -383,18 +414,18 @@ if(restart == 1) {
 else {
 //Prepare initial velocities
    cout << "Prepare random velocities with center of mass velocity equal to zero " << endl << endl;
-   float sumv[3] = {0.0, 0.0, 0.0};
+   double sumv[3] = {0.0, 0.0, 0.0};
    for (int i=0; i<npart; ++i){
-     vx[i] = rand()/float(RAND_MAX) - 0.5; //centrate in 0
-     vy[i] = rand()/float(RAND_MAX) - 0.5;
-     vz[i] = rand()/float(RAND_MAX) - 0.5;
+     vx[i] = rand()/double(RAND_MAX) - 0.5; //centrate in 0
+     vy[i] = rand()/double(RAND_MAX) - 0.5;
+     vz[i] = rand()/double(RAND_MAX) - 0.5;
 
      sumv[0] += vx[i];
      sumv[1] += vy[i];
      sumv[2] += vz[i];
    } //servono per calcolare la posizione al tempo precedente rispetto a quello iniziale
-   for (int idim=0; idim<3; ++idim) sumv[idim] /= (float)npart;
-   float sumv2 = 0.0, fs;
+   for (int idim=0; idim<3; ++idim) sumv[idim] /= (double)npart;
+   double sumv2 = 0.0, fs;
    for (int i=0; i<npart; ++i){ //così evito drift rispetto al centro di massa del sistema
      vx[i] = vx[i] - sumv[0];
      vy[i] = vy[i] - sumv[1];
@@ -402,7 +433,7 @@ else {
 
      sumv2 += vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i];
    }
-   sumv2 /= (float)npart;
+   sumv2 /= (double)npart;
    fs = sqrt(3 * temp / sumv2);   // fs = velocity scale factor 
    for (int i=0; i<npart; ++i){
      vx[i] *= fs;
@@ -416,31 +447,31 @@ else {
 } 
 //copy configurations on the gpu
    HANDLE_ERROR( cudaMemcpy( P->x, x,
-                              npart*sizeof(float),
+                              npart*sizeof(double),
                               cudaMemcpyHostToDevice ) ); 
    HANDLE_ERROR( cudaMemcpy( P->y, y,
-                              npart*sizeof(float),
+                              npart*sizeof(double),
                               cudaMemcpyHostToDevice ) );
    HANDLE_ERROR( cudaMemcpy( P->z, z,
-                              npart*sizeof(float),
+                              npart*sizeof(double),
                               cudaMemcpyHostToDevice ) );
    HANDLE_ERROR( cudaMemcpy( P->xold, xold,
-                              npart*sizeof(float),
+                              npart*sizeof(double),
                               cudaMemcpyHostToDevice ) ); 
    HANDLE_ERROR( cudaMemcpy( P->yold, yold,
-                              npart*sizeof(float),
+                              npart*sizeof(double),
                               cudaMemcpyHostToDevice ) );  
    HANDLE_ERROR( cudaMemcpy( P->zold, zold,
-                              npart*sizeof(float),
+                              npart*sizeof(double),
                               cudaMemcpyHostToDevice ) );  
    HANDLE_ERROR( cudaMemcpy( P->vx, vx,
-                              npart*sizeof(float),
+                              npart*sizeof(double),
                               cudaMemcpyHostToDevice ) ); 
    HANDLE_ERROR( cudaMemcpy( P->vy, vy,
-                              npart*sizeof(float),
+                              npart*sizeof(double),
                               cudaMemcpyHostToDevice ) );  
    HANDLE_ERROR( cudaMemcpy( P->vz, vz,
-                              npart*sizeof(float),
+                              npart*sizeof(double),
                               cudaMemcpyHostToDevice ) );
   
 //free memory on host device
@@ -458,8 +489,8 @@ return;
 
 }
 
-void first_move(float* x,float*y,float*z,float*xold,float*yold,float*zold,float*vx,float* vy,float* vz){ //Move particles with Verlet algorithm
-  float xnew, ynew, znew, fx[npart], fy[npart], fz[npart];
+void first_move(double* x,double*y,double*z,double*xold,double*yold,double*zold,double*vx,double* vy,double* vz){ //Move particles with Verlet algorithm
+  double xnew, ynew, znew, fx[npart], fy[npart], fz[npart];
 
   for(int i=0; i<npart; ++i){ //Force acting on particle i
     fx[i] = Force_cpu(x,y,z,i,0);
@@ -488,13 +519,13 @@ void first_move(float* x,float*y,float*z,float*xold,float*yold,float*zold,float*
   return;
 }
 
-float Force_cpu(float* x,float*y,float*z,int ip, int idir){ //Compute forces as -Grad_ip V(r)
-  float f=0.0;
-  float dvec[3], dr;
+double Force_cpu(double* x,double*y,double*z,int ip, int idir){ //Compute forces as -Grad_ip V(r)
+  double f=0.0;
+  double dvec[3], dr;
 
   for (int i=0; i<npart; ++i){
-    if(i != ip){
-      dvec[0] = Pbc( x[ip] - x[i] );  
+    if(i != ip){//su tutte le particelle tranne la stessa
+      dvec[0] = Pbc( x[ip] - x[i] );  // distance ip-i in pbc
       dvec[1] = Pbc( y[ip] - y[i] );
       dvec[2] = Pbc( z[ip] - z[i] );
 
@@ -543,7 +574,7 @@ void exit(Particles* P) {
 
 void Move_gpu(Particles *P) {
 
- float*xold,*yold,*zold,*x,*y,*z,*vx,*vy,*vz;
+ double*xold,*yold,*zold,*x,*y,*z,*vx,*vy,*vz;
  xold = P->xold;
  yold = P->yold;
  zold = P->zold;
@@ -562,28 +593,27 @@ void Move_gpu(Particles *P) {
 
 //method of atom decomposition ---> each block calculate force for its own particle (ip = blockIdx.x)
 // threads in each block calculate the corresponding force acting on the block-particle
-__global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,float*z,float*vx,float*vy,float*vz){
-
+__global__ void verlet_gpu(double*xold,double*yold,double*zold,double*x,double*y,double*z,double*vx,double*vy,double*vz){
 //shared memory, to store force
-	__shared__ float f0[th];
-	__shared__ float f1[th];
-	__shared__ float f2[th];
-	float xnew,ynew,znew;
-	float temp0,temp1,temp2;
-	float dvec[3];
-	float dr;
+	__shared__ double f0[th];
+	__shared__ double f1[th];
+	__shared__ double f2[th];
+	double xnew,ynew,znew;
+	double temp0,temp1,temp2;
+	double dvec[3];
+	double dr;
 	int tid;
 	int cacheIndex = threadIdx.x;
 	int ip = blockIdx.x;
-	while (ip < gpu_npart ) { //cycle over particles
+	while (ip < gpu_npart ) {//cycle over particles
 		tid = threadIdx.x;
 		temp0 =0;
 		temp1 =0;
 		temp2 =0;
 		while( tid<gpu_npart ) {//Force acting on particle ip
-			dvec[0] = Pbc_gpu(tex1Dfetch(texx,ip)-tex1Dfetch(texx,tid)); 
-			dvec[1] = Pbc_gpu(tex1Dfetch(texy,ip)-tex1Dfetch(texy,tid)); 
-			dvec[2] = Pbc_gpu(tex1Dfetch(texz,ip)-tex1Dfetch(texz,tid));
+			dvec[0] = Pbc_gpu(fetch_double(texx,ip)-fetch_double(texx,tid)); 
+			dvec[1] = Pbc_gpu(fetch_double(texy,ip)-fetch_double(texy,tid)); 
+			dvec[2] = Pbc_gpu(fetch_double(texz,ip)-fetch_double(texz,tid));
 			dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
 			if (dr<gpu_rcut && dr>0) {//Compute forces as -Grad_ip V(r)
 				temp0 += dvec[0] * (48.0/pow(dr,14) - 24.0/pow(dr,8)); 
@@ -597,8 +627,8 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 		f2[cacheIndex] = temp2;	
 		__syncthreads();
 		tid = blockDim.x/2;
-		while (tid !=0) {//putting all contributes in f[0]
-			if (cacheIndex < tid) {
+		while (tid !=0) {
+			if (cacheIndex < tid) {//putting all contributes in f[0]
 				f0[cacheIndex] += f0[cacheIndex+tid];
 				f1[cacheIndex] += f1[cacheIndex+tid];	
 				f2[cacheIndex] += f2[cacheIndex+tid];
@@ -609,17 +639,17 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 
 	if (cacheIndex == 0) {//Verlet integration scheme
 
-		xnew = Pbc_gpu( 2.0 * tex1Dfetch(texx,ip) - tex1Dfetch(texxold,ip) + f0[0] *gpu_delta*gpu_delta);
-		ynew = Pbc_gpu( 2.0 * tex1Dfetch(texy,ip) - tex1Dfetch(texyold,ip) + f1[0] *gpu_delta*gpu_delta);
-		znew = Pbc_gpu( 2.0 * tex1Dfetch(texz,ip) - tex1Dfetch(texzold,ip) + f2[0] *gpu_delta*gpu_delta);
+		xnew = Pbc_gpu( 2.0 * fetch_double(texx,ip) - fetch_double(texxold,ip) + f0[0] *gpu_delta*gpu_delta);
+		ynew = Pbc_gpu( 2.0 * fetch_double(texy,ip) - fetch_double(texyold,ip) + f1[0] *gpu_delta*gpu_delta);
+		znew = Pbc_gpu( 2.0 * fetch_double(texz,ip) - fetch_double(texzold,ip) + f2[0] *gpu_delta*gpu_delta);
 
-		vx[ip] = Pbc_gpu(xnew - tex1Dfetch(texxold,ip)) / (2.0 * gpu_delta);
-    		vy[ip] = Pbc_gpu(ynew - tex1Dfetch(texyold,ip)) / (2.0 * gpu_delta);
-    		vz[ip] = Pbc_gpu(znew - tex1Dfetch(texzold,ip)) / (2.0 * gpu_delta);
+		vx[ip] = Pbc_gpu(xnew - fetch_double(texxold,ip)) / (2.0 * gpu_delta);
+    		vy[ip] = Pbc_gpu(ynew - fetch_double(texyold,ip)) / (2.0 * gpu_delta);
+    		vz[ip] = Pbc_gpu(znew - fetch_double(texzold,ip)) / (2.0 * gpu_delta);
 
-    		xold[ip] = tex1Dfetch(texx,ip);
-    		yold[ip] = tex1Dfetch(texy,ip);
-    		zold[ip] = tex1Dfetch(texz,ip);
+    		xold[ip] = fetch_double(texx,ip);
+    		yold[ip] = fetch_double(texy,ip);
+    		zold[ip] = fetch_double(texz,ip);
 
     		x[ip] = xnew;
    		y[ip] = ynew;
@@ -629,16 +659,16 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
 	}		
 }
 
-__global__ void  measure_kinetic(Lock lock,float *k) {
+__global__ void  measure_kinetic(Lock lock,double *k) {
 
 //it's simply a scalar product
-	__shared__ float kin[th]; 
-	float a=0,b=0,c=0; 
+	__shared__ double kin[th]; 
+	double a=0,b=0,c=0; 
 	int i = threadIdx.x+blockIdx.x*blockDim.x;
 	while (i<gpu_npart) {
-		a += tex1Dfetch(texvx,i)*tex1Dfetch(texvx,i);
-		b += tex1Dfetch(texvy,i)*tex1Dfetch(texvy,i);
-		c += tex1Dfetch(texvz,i)*tex1Dfetch(texvz,i);
+		a += fetch_double(texvx,i)*fetch_double(texvx,i);
+		b += fetch_double(texvy,i)*fetch_double(texvy,i);
+		c += fetch_double(texvz,i)*fetch_double(texvz,i);
 		i += blockDim.x*gridDim.x;
 	}
 	int cacheIndex = threadIdx.x;
@@ -658,32 +688,32 @@ __global__ void  measure_kinetic(Lock lock,float *k) {
 
 }
 
-__global__ void  measure_pot_virial(Lock lock,float *v,float *w,float* hist) {
+__global__ void  measure_pot_virial(Lock lock,double *v,double *w,double* hist) {
 
-	__shared__ float pot[th];
-	__shared__ float vir[th];
-	float temp0=0;
-	float temp1=0;
-	float dvec[3];
-	float dr;
+	__shared__ double pot[th];
+	__shared__ double vir[th];
+	double temp0=0;
+	double temp1=0;
+	double dvec[3];
+	double dr;
+	int tid;
 	int bin;
 	int cacheIndex = threadIdx.x;
-        int tid;
 	int i = blockIdx.x;
 	int j;
 	while (i<gpu_npart-1) {
-		j = i+1+threadIdx.x; //take the consecutive, not to count twice the same
+		j = i+1+threadIdx.x;//take the consecutive, not to count twice the same
 				     //contribute
 		__syncthreads();
 		while (j<gpu_npart) {
-			dvec[0] = Pbc_gpu(tex1Dfetch(texx,i)-tex1Dfetch(texx,j));
-                        dvec[1] = Pbc_gpu(tex1Dfetch(texy,i)-tex1Dfetch(texy,j));
-                        dvec[2] = Pbc_gpu(tex1Dfetch(texz,i)-tex1Dfetch(texz,j));
+			dvec[0] = Pbc_gpu(fetch_double(texx,i)-fetch_double(texx,j));
+                        dvec[1] = Pbc_gpu(fetch_double(texy,i)-fetch_double(texy,j));
+                        dvec[2] = Pbc_gpu(fetch_double(texz,i)-fetch_double(texz,j));
                         dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
 
 			bin = int(dr/gpu_binsize);
 			//filling the histogram
-			atomicAdd( &hist[bin],2);//this is necessary, to not overwrite counts
+			AtomicAdd( &hist[bin],2);//this is necessary, to not overwrite counts
                         if ( dr<gpu_rcut ) {
 				temp0 += 4.0/pow(dr,12) - 4.0/pow(dr,6);
                                 temp1 += 16.0/pow(dr,12) - 8.0/pow(dr,6);
@@ -716,39 +746,39 @@ __global__ void  measure_pot_virial(Lock lock,float *v,float *w,float* hist) {
 void Measure(Particles* P) {
 
  Lock lock;
-
 	//setting all variables on gpu side equals to zero
-	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(float)  ) );
-	HANDLE_ERROR( cudaMemset(dev_k,0, sizeof(float)  ) );
-	HANDLE_ERROR( cudaMemset(dev_v,0, sizeof(float)  ) );
-	HANDLE_ERROR( cudaMemset(dev_w,0, sizeof(float)  ) );
+	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*10*sizeof(double)  ) );
+	HANDLE_ERROR( cudaMemset(dev_k,0, sizeof(double)  ) );
+	HANDLE_ERROR( cudaMemset(dev_v,0, sizeof(double)  ) );
+	HANDLE_ERROR( cudaMemset(dev_w,0, sizeof(double)  ) );
 
 	measure_kinetic<<<bl,th>>>(lock,dev_k);
 	measure_pot_virial<<<bl,th>>>(lock,dev_v,dev_w,dev_hist);
 
 	//cudaDeviceSynchronize();
 
-	//copy on cpu-side, to do the data analysis
-	float v,w,k;
-	float hist[nbins*10];
-	float deltaVr;
-        HANDLE_ERROR( cudaMemcpy(hist,dev_hist,nbins*10*sizeof(float),cudaMemcpyDeviceToHost) );
+//copy on cpu-side, to do the data analysis
+	double v,w,k;
+	double hist[nbins*10];
+	double deltaVr;
+
+       HANDLE_ERROR( cudaMemcpy(hist,dev_hist,nbins*10*sizeof(double),cudaMemcpyDeviceToHost) );
 	for (int i=0;i<nbins;i++) {
 	    deltaVr = rho*npart*4.*M_PI/3.*(pow((i+1)*bin_size,3)-pow((i)*bin_size,3));
 	   gdir[i].push_back(hist[i]/deltaVr);
         }
 
-	HANDLE_ERROR( cudaMemcpy(&w,dev_w,sizeof(float),cudaMemcpyDeviceToHost) );
-	HANDLE_ERROR( cudaMemcpy(&v,dev_v,sizeof(float),cudaMemcpyDeviceToHost) );
-	HANDLE_ERROR( cudaMemcpy(&k,dev_k,sizeof(float),cudaMemcpyDeviceToHost) );
+	HANDLE_ERROR( cudaMemcpy(&w,dev_w,sizeof(double),cudaMemcpyDeviceToHost) );
+	HANDLE_ERROR( cudaMemcpy(&v,dev_v,sizeof(double),cudaMemcpyDeviceToHost) );
+	HANDLE_ERROR( cudaMemcpy(&k,dev_k,sizeof(double),cudaMemcpyDeviceToHost) );
 
-	float t = 0.5*k;
+	double t = 0.5*k;
 
-        stima_pot_gpu = v/(float)npart+vtail; //Potential energy per particle
-        stima_kin_gpu = t/(float)npart; //Kinetic energy per particle
-        stima_temp_gpu = (2.0 / 3.0) *t/(float)npart; //Temperature
-        stima_etot_gpu = (t+v)/(float)npart+vtail; //Total energy per particle
-        stima_press_gpu = rho*stima_temp_gpu+ (w + ptail*(float)npart ) / vol;
+        stima_pot_gpu = v/(double)npart+vtail; //Potential energy per particle
+        stima_kin_gpu = t/(double)npart; //Kinetic energy per particle
+        stima_temp_gpu = (2.0 / 3.0) *t/(double)npart; //Temperature
+        stima_etot_gpu = (t+v)/(double)npart+vtail; //Total energy per particle
+        stima_press_gpu = rho*stima_temp_gpu+ (w + ptail*(double)npart ) / vol;
 
         properties_gpu[0].push_back(stima_pot_gpu);
         properties_gpu[1].push_back(stima_kin_gpu);
@@ -782,13 +812,13 @@ void Print(vector<T> v, string name) {
 
 void print_velocities(Particles* P) {
 
-float * vx = new float [npart];
-float * vy = new float [npart];
-float * vz = new float [npart];
+double * vx = new double [npart];
+double * vy = new double [npart];
+double * vz = new double [npart];
 
-  HANDLE_ERROR( cudaMemcpy(vx,P->vx,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(vy,P->vy,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(vz,P->vz,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(vx,P->vx,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(vy,P->vy,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(vz,P->vz,npart*sizeof(double),cudaMemcpyDeviceToHost));
 
 cout<< "\n";
  cout << "Print actual velocities:" << endl;
@@ -808,13 +838,13 @@ delete [] vz;
 
 
 void print_old_conf(Particles* P) {
-  float * xold = new float[npart];
-  float * yold = new float[npart];
-  float * zold = new float[npart];
+  double * xold = new double[npart];
+  double * yold = new double[npart];
+  double * zold = new double[npart];
 
-  HANDLE_ERROR( cudaMemcpy(xold,P->xold,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(yold,P->yold,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(zold,P->zold,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(xold,P->xold,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(yold,P->yold,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(zold,P->zold,npart*sizeof(double),cudaMemcpyDeviceToHost));
 
 cout<< "\n";
  cout << "Print actual old configuration" << endl;
@@ -835,13 +865,13 @@ cout<< "\n";
 
 void print_conf(Particles* P) {
 
-  float * x = new float[npart];
-  float * y = new float[npart];
-  float * z = new float[npart];
+  double * x = new double[npart];
+  double * y = new double[npart];
+  double * z = new double[npart];
 
-  HANDLE_ERROR( cudaMemcpy(x,P->x,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(y,P->y,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(z,P->z,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(x,P->x,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(y,P->y,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(z,P->z,npart*sizeof(double),cudaMemcpyDeviceToHost));
  cout<< "\n";
  cout << "Print actual configuration" << endl;
  for (int i=0; i<npart; ++i){
@@ -860,13 +890,13 @@ cout <<"\n";
 
 void ConfFinal(Particles*P){ //Write final configuration
 
-  float * xold = new float[npart];
-  float * yold = new float[npart];
-  float * zold = new float[npart];
+  double * xold = new double[npart];
+  double * yold = new double[npart];
+  double * zold = new double[npart];
 
-  HANDLE_ERROR( cudaMemcpy(xold,P->xold,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(yold,P->yold,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(zold,P->zold,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(xold,P->xold,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(yold,P->yold,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(zold,P->zold,npart*sizeof(double),cudaMemcpyDeviceToHost));
 
   ofstream WriteOldConf("config.final",ios::out);
   cout << "Print penultimate configuration in config.final " << endl << endl;
@@ -879,13 +909,13 @@ void ConfFinal(Particles*P){ //Write final configuration
   delete [] yold;
   delete [] zold;
 
-  float * x = new float[npart];
-  float * y = new float[npart];
-  float * z = new float[npart];
+  double * x = new double[npart];
+  double * y = new double[npart];
+  double * z = new double[npart];
 
-  HANDLE_ERROR( cudaMemcpy(x,P->x,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(y,P->y,npart*sizeof(float),cudaMemcpyDeviceToHost));
-  HANDLE_ERROR( cudaMemcpy(z,P->z,npart*sizeof(float),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(x,P->x,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(y,P->y,npart*sizeof(double),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR( cudaMemcpy(z,P->z,npart*sizeof(double),cudaMemcpyDeviceToHost));
 
 
   ofstream WriteConf("config.0",ios::out);
@@ -904,11 +934,11 @@ void ConfFinal(Particles*P){ //Write final configuration
 }
 
 //cpu-side
-float Pbc(float r) {  //Algorithm for periodic boundary conditions with side L=box
+double Pbc(double r) {  //Algorithm for periodic boundary conditions with side L=box
     return r - box * rintf(r/box);
 }
 //gpu-side
-__device__ float Pbc_gpu(float r) {  //Algorithm for periodic boundary conditions with side L=box
+__device__ double Pbc_gpu(double r) {  //Algorithm for periodic boundary conditions with side L=box
     return r - gpu_box * rintf(r/gpu_box);
 }
 
@@ -917,8 +947,8 @@ void data_blocking_MD(int N) {
 int L = (nstep/10.)/N; //cause I measure properties each 10 steps
 vector<string> names = {"ave_epot","ave_ekin","ave_temp","ave_etot","ave_press"};
 int j=0;
-vector<float> v_mean;
-vector<float> data(2);
+vector<double> v_mean;
+vector<double> data(2);
  for (auto & el : names) {
 	for (int i=0;i<N;i++) 
 		 v_mean.push_back( mean_v(properties_gpu[j], (i+1)*L, i*L ));
@@ -949,12 +979,12 @@ vector<float> data(2);
  Gave.close();
 };
 
-vector<float> last_data_from_datablocking(int N,vector<float> simulation_value) {
+vector<double> last_data_from_datablocking(int N,vector<double> simulation_value) {
 
- vector<float> err_prog;
- vector<float> sum_prog(N,0.);
- vector<float> simulation_value2;
- vector<float> su2_prog(N,0.);
+ vector<double> err_prog;
+ vector<double> sum_prog(N,0.);
+ vector<double> simulation_value2;
+ vector<double> su2_prog(N,0.);
 
  for (int i=0;i<N;i++) simulation_value2.push_back(simulation_value[i]*simulation_value[i]);
 
@@ -967,17 +997,17 @@ vector<float> last_data_from_datablocking(int N,vector<float> simulation_value) 
          su2_prog[i]/=(i+1);
          err_prog.push_back(error(sum_prog,su2_prog,i));
  }
-vector<float> data = {sum_prog[N-1],err_prog[N-1]};
+vector<double> data = {sum_prog[N-1],err_prog[N-1]};
 
         return data;
 };
 
-void data_blocking(int N,vector<float> simulation_value, float real_value, string file) {
+void data_blocking(int N,vector<double> simulation_value, double real_value, string file) {
 
- vector<float> err_prog;
- vector<float> sum_prog(N,0.);
- vector<float> simulation_value2;
- vector<float> su2_prog(N,0.);
+ vector<double> err_prog;
+ vector<double> sum_prog(N,0.);
+ vector<double> simulation_value2;
+ vector<double> su2_prog(N,0.);
 
  for (int i=0;i<N;i++) simulation_value2.push_back(simulation_value[i]*simulation_value[i]);
 
@@ -998,13 +1028,13 @@ void data_blocking(int N,vector<float> simulation_value, float real_value, strin
 
 };
 
-float error(vector<float> AV, vector<float> AV2, int i) {
+double error(vector<double> AV, vector<double> AV2, int i) {
         if (i==0) return 0;
-        else return sqrt( (AV2[i]-AV[i]*AV[i]) /(float)i );
+        else return sqrt( (AV2[i]-AV[i]*AV[i]) /(double)i );
 };
 
-float mean_v(vector<float> v,int last_index, int first_index) {
-	float sum = 0;
+double mean_v(vector<double> v,int last_index, int first_index) {
+	double sum = 0;
 	for (int i=first_index; i<last_index; i++) sum += v[i];
         return sum/(last_index-first_index);
 }; 
