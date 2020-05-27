@@ -36,8 +36,10 @@ Tale funzione segue la logica dell'*Atom Decomposition*, ovvero ogni blocco, con
 	+ energia totale per particella (che deve restare costante durante una singola simulazione)
 	+ temperatura del sistema
 	+ pressione (con correzione ptail)
-	+ pair radial correlation function g(r)  
-Per calcolare queste grandezze vengono chiamate due funzioni __global__:   
+	+ pair radial correlation function g(r)   
+ 
+* Per calcolare queste grandezze vengono chiamate due funzioni __global__:
+   
 	+ La prima relativa al calcolo dell'energia cinetica totale (è semplicemente un prodotto scalare)   
 	+ La seconda calcola il viriale e l'energia potenziale delle particelle, e riempie l'istrogramma relativo alla g(r). Questa funzione è molto simile come metodo alla funzione *verlet_gpu()* poichè è necessario calcolare la distanza tra una particella e tutte le altre. Per cui l'indice della prima particella è l'indice di blocco, mentre l'indice della seconda particella è l'indice di thread.  
 Per queste funzioni è stato necessario utilizzare la *struct Lock*, che tramite l'utilizzo della sua variabile *mutex* permette l'esecuzione di un thread per volta (operazione necessaria per sommare tra loro le somme parziali per il prodotto scalare e il calcolo dell'energia potenziale e il viriale). Per riempire l'istogramma è stato necessario invece usare la funzione API di Cuda *atomicAdd()* (per non sovrascrivere conteggi e quindi rischiare dicontare di meno).
