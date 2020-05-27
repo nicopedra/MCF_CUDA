@@ -22,18 +22,18 @@ Dopo aver letto i parametri viene allocata sulla gpu la memoria necessaria.
 
 ### Initialization
 
-Dopo la funzione *Input()* viene chiamata la funzione *Initialization()*. Questa (a seconda del valore assegnato al parametro restart) apre i file config. e inizializza i valori iniziali alle coordinate e alle velocità {x,y,z,xold,yold,zold,vx,vy,vz} (le velocità vengono ricavate dalle posizioni). Le velocità vengono poi riscalate per avere come temperatura iniziale proprio quella target (per permettere al sistema di raggiungerla). Con queste nuovo velocità si ricavano le coordinate xold,yold,zold che le particelle devono avere per possedere quei valori di velocità.    
+Dopo la funzione *Input()* viene chiamata la funzione *Initialization()*. Questa (a seconda del valore assegnato al parametro restart) apre i file config. e inizializza i valori iniziali alle coordinate e alle velocità {x,y,z,xold,yold,zold,vx,vy,vz} (le velocità vengono ricavate dalle posizioni). Le velocità vengono poi riscalate per avere come temperatura iniziale proprio quella target (per permettere al sistema di raggiungerla). Con queste nuove velocità si ricavano le coordinate xold,yold,zold che le particelle devono avere per possedere quei valori di velocità.    
 A questo punto tramite il comando cudaMemcpy si copiano i valori ricavati sulla cpu alla gpu. Da ora in poi queste coordinate verranno modificate sempre tramite funzioni global eseguite sulla gpu.    
 
 ### Ciclo su nstep MD
 
-Ora si esegue un ciclo for su tutti gli step di simulazione che si vogliono eseguire.  
+Ora si esegue un ciclo *for* su tutti gli step di simulazione che si vogliono eseguire.  
 - La prima operazione del ciclo è la chiamata alla funzione Move(). Questa funzione chiama la funzione __global__ verlet_gpu() che evolve le coordinate tramite l'integratore di Verlet.  
-Tale funzione segue la logica dell'*Atom Decomposition*, ovvero ogni blocco, con i suoi threads, si occupa di calcolare la forza relativa a una singola particella e a eseguire l'evoluzione di tale particella. (per cui l'indice di blocco rappresenta la coordinate della particella che subisce la forza dovuta alla presenza di tutte le altre particelle (rappresentate dagli indici di thread di quel blocco) ).  
+Tale funzione segue la logica dell'*Atom Decomposition*, ovvero ogni blocco, con i suoi threads, si occupa di calcolare la forza relativa a una singola particella e a eseguire l'evoluzione di tale particella. (per cui l'indice di blocco rappresenta la coordinate della particella che subisce la forza dovuta alla presenza di tutte le altre particelle (rappresentate dagli indici di thread di quel blocco) ). Per far parlare tra di loro i diversi threads di ogni singolo blocco è stata utilizzata la **shared memory**.   
 - La seconda operazione è calcolare ogni 10 step le grandezze fisiche istantanee chiamando la funzione Measure: 
 	+ energia cinetica per particella (teorema di equipartizione)
-	+ energia potenziale per particella (con correzione vtail dovuta al raggiu di cut off)
-	+ energia totale per particella (che deve restare costante durante una singola simulazione)
+	+ energia potenziale per particella (con correzione vtail dovuta al raggio di cut off)
+	+ energia totale per particella (che deve restare costante durante una singola simulazione, insieme NVE *microcanonico*)
 	+ temperatura del sistema
 	+ pressione (con correzione ptail)
 	+ pair radial correlation function g(r)   
@@ -41,18 +41,18 @@ Tale funzione segue la logica dell'*Atom Decomposition*, ovvero ogni blocco, con
 * Per calcolare queste grandezze vengono chiamate due funzioni __global__:
    
 	+ La prima relativa al calcolo dell'energia cinetica totale (è semplicemente un prodotto scalare)   
-	+ La seconda calcola il viriale e l'energia potenziale delle particelle, e riempie l'istrogramma relativo alla g(r). Questa funzione è molto simile come metodo alla funzione *verlet_gpu()* poichè è necessario calcolare la distanza tra una particella e tutte le altre. Per cui l'indice della prima particella è l'indice di blocco, mentre l'indice della seconda particella è l'indice di thread.  
-Per queste funzioni è stato necessario utilizzare la *struct Lock*, che tramite l'utilizzo della sua variabile *mutex* permette l'esecuzione di un thread per volta (operazione necessaria per sommare tra loro le somme parziali per il prodotto scalare e il calcolo dell'energia potenziale e il viriale). Per riempire l'istogramma è stato necessario invece usare la funzione API di Cuda *atomicAdd()* (per non sovrascrivere conteggi e quindi rischiare dicontare di meno).  
+	+ La seconda calcola il viriale e l'energia potenziale delle particelle, e riempie l'istrogramma relativo alla g(r). Questa funzione è molto simile come metodo alla funzione *verlet_gpu()* poichè è necessario calcolare la distanza tra una particella e tutte le altre. Per cui l'indice della prima particella è l'indice di blocco, mentre l'indice della seconda particella è l'indice di thread. Anche per queste funzione è stato fondamentale utilizzare la **shared memory**.  
+È stato necessario inoltre utilizzare la *struct Lock*, che tramite l'utilizzo della sua variabile *mutex* permette l'esecuzione di un thread per volta (operazione necessaria per sommare tra loro le somme parziali per il prodotto scalare e il calcolo dell'energia potenziale e il viriale). Per riempire l'istogramma è stato necessario invece usare la funzione API di Cuda *atomicAdd()* (per non sovrascrivere conteggi e quindi rischiare dicontare di meno).  
 
-- Man mano le grandezza misurate vengono raccolte dentro un vector<>, poi necessario all'analisi dati
+- Man mano le grandezze misurate vengono raccolte dentro un vector<>, poi necessario all'analisi dati
 
 ### Data Analysis
 
-Uscito dal ciclo vengono chiamate le funzioni *print_properties()* e *data_blocking()*. Queste due funzione eseguono l'analisi dati delle grandezze misurate e raccolte durante la simulazione. L'analisi dati viene interamente eseguita su cpu. 
+Uscito dal ciclo vengono chiamate le funzioni *print_properties()* e *data_blocking()*. Queste due funzioni eseguono l'analisi dati delle grandezze misurate e raccolte durante la simulazione. L'analisi dati viene interamente eseguita su cpu. 
 
 ### Exit()
 
-L'ultima parte del codice salva nei file config.0 e config.final le configurazioni finale e penultima. Per poi essere lette successivamente con la seconda simulazione (e così via).  
+L'ultima parte del codice salva nei file config.0 e config.final le configurazioni finale e penultima. Per poi essere lette successivamente con la simulazione successiva (e così via).    
 Successivamente viene chiamata funzione Exit() che libera tutta la memoria allocata sulla gpu e chiama la funzione *cudaunbindtexture*.
 
 ## EQUILIBRATION 
