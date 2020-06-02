@@ -70,7 +70,8 @@ Tuttavia la logica con cui calcolare la forza agente su ogni particella deve ess
 	+ calcolate tutte le forze eseguo l'aggiornamento delle posizioni delle particelle *ip*.  
 - con l'utilizzo della memoria global invece, tramite la funzione verlet c'era il rischio di utilizzare coordinate già aggiornate per calcolare le forze delle particelle rimanenti (non ancora aggiornate). Cioè il rischio di calcolare le forze senza che il sistema stia fermo, ma dando la precedenza ad alcune particelle di muoversi prima rispetto ad altre.   
 - utilizzando la **texture memory** invece è possibile farlo. La memoria a cui sta puntando la texture memory viene aggiornata solo __dopo__ l'esecuzione del kernel.  
-Cioè non è possibile in uno stesso kernel modificare il contenuto di un indirizzo di memoria a cui sta puntando la memoria texture e prentendere , nello stesso kernel, di utilizzare quel nuovo contenuto con la chiamata tex1dfetch per fare i conti. Se si chiama la memoria texture allora questa utilizza il contenuto assegnato durante il precedente kernel.
+Cioè non è possibile in uno stesso kernel modificare il contenuto di un indirizzo di memoria a cui sta puntando la memoria texture e prentendere , nello stesso kernel, di utilizzare quel nuovo contenuto con la chiamata tex1dfetch per fare i conti. Se si chiama la memoria texture allora questa utilizza il contenuto assegnato durante il precedente kernel.  
+Una funziona di prova è presente nella cartella *prova* in lcm, nello script sum\_vec.cu (andare a vedere e fare uno script apposta)
 
     
 
