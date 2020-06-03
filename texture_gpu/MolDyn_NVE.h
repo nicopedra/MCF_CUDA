@@ -8,10 +8,10 @@
 #include <cuda.h>
 #include "lock.h"
 
-#define bl 512
-#define th_verlet 128
-#define th_measure 1024
-#define th_kinetic 1024
+#define bl 128 //512
+#define th_verlet 128 //128
+#define th_measure 128 //1024
+#define th_kinetic 128 //1024
 using namespace std;
 
 //for Initialization
@@ -46,6 +46,13 @@ int restart;
 	texture<float> texvx;
 	texture<float> texvy;
 	texture<float> texvz;
+
+	texture<float> texFx;
+	texture<float> texFy;
+	texture<float> texFz;
+
+//forces
+float* Fx,*Fy,*Fz;
 
 // thermodynamical state
 int npart;
@@ -101,8 +108,6 @@ void ConfFinal(Particles*);
 //Periodic boundary condition
 float Pbc(float);
 
-void print_properties();
-
 template <typename T>
 void Print(vector<T>,string);
 
@@ -131,6 +136,8 @@ void first_move(float*,float*,float*,float*,float*,float*,float*,float*,float*);
 float Force_cpu(float*,float*,float*,int,int);
 
 //################# Global functions ########################
+
+__global__ void force_gpu(float*,float*,float*);
 
 __global__ void verlet_gpu(float*,float*,float*,float*,float*,float*,float*,float*,float*);
 
@@ -167,33 +174,6 @@ static void HandleError( cudaError_t err,
                                     __FILE__, __LINE__ ); \
                             exit( EXIT_FAILURE );}}
 
-//useful device properties
-void print_device_properties() {
-
- int count;
- cudaDeviceProp prop;
- HANDLE_ERROR(cudaGetDeviceCount(&count));
- cout <<"how many devices: "<< count << endl;
-
- for (int i=0;i<count;i++) {
-        HANDLE_ERROR(cudaGetDeviceProperties(&prop,i) );
-        cout <<"name: "<< prop.name << endl;
-        cout <<"total global memory: "<< prop.totalGlobalMem <<"bytes \n";
-        cout <<"memory per block: "<< prop.sharedMemPerBlock <<"bytes \n";
-        cout <<"numb of threads in warp: "<< prop.warpSize << endl;
-        cout <<"max threads per block: "<< prop.maxThreadsPerBlock << endl;
-        cout <<"threads allowed "<<1<<" dim: "<< prop.maxThreadsDim[0] << "\n";
-        cout <<"blocks allowed in "<<1<<" dim: "<< prop.maxGridSize[0] <<"\n";
-        cout <<"threads allowed 2 dim: "<< prop.maxThreadsDim[1] <<"\n";
-        cout <<"blocks allowed in 2 dim: "<< prop.maxGridSize[1] << endl;
-        cout <<"threads allowed in 3 dim: "<< prop.maxThreadsDim[2] << endl;
-        cout <<"blocks allowed in 3 dim: "<< prop.maxGridSize[2] << endl;
-        cout <<"cudamem+kernel? "<< prop.deviceOverlap << endl;
-        printf("Compute capability: %d.%d\n", prop.major,prop.minor);
-        cout << "\n\n";
- }
-
-};
 
 void Input(Particles* P){ //Prepare all stuff for the simulation
 
@@ -254,6 +234,8 @@ void Input(Particles* P){ //Prepare all stuff for the simulation
   bin_size = (box*0.5)/nbins; 
   cout << "size of each bin: " << bin_size << endl;  
 
+  cudaSetDevice(1);
+
 //allocate memory on global memory
  HANDLE_ERROR( cudaMalloc( (void**)&P->x,
                               npart*sizeof(float) ) );
@@ -301,6 +283,24 @@ void Input(Particles* P){ //Prepare all stuff for the simulation
                                    npart*sizeof(float) ) );
  HANDLE_ERROR( cudaBindTexture( NULL, texvz,
                                    P->vz,
+                                   npart*sizeof(float) ) );
+
+//same as above, but for the forces
+ HANDLE_ERROR( cudaMalloc( (void**)&Fx,
+                              npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaMalloc( (void**)&Fy,
+                              npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaMalloc( (void**)&Fz,
+                              npart*sizeof(float) ) );
+
+ HANDLE_ERROR( cudaBindTexture( NULL, texFx,
+                                   Fx,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texFy,
+                                   Fy,
+                                   npart*sizeof(float) ) );
+ HANDLE_ERROR( cudaBindTexture( NULL, texFz,
+                                   Fz,
                                    npart*sizeof(float) ) );
 
 //allocate global memory on the gpu
@@ -517,15 +517,18 @@ float Force_cpu(float* x,float*y,float*z,int ip, int idir){ //Compute forces as 
 //unbind and free memory
 void exit(Particles* P) {
 
-    cudaUnbindTexture( texx );
-    cudaUnbindTexture( texy );
-    cudaUnbindTexture( texz );
-    cudaUnbindTexture( texxold );
-    cudaUnbindTexture( texyold );
-    cudaUnbindTexture( texzold );
-    cudaUnbindTexture( texvx );
-    cudaUnbindTexture( texvy );
-    cudaUnbindTexture( texvz );
+    HANDLE_ERROR(cudaUnbindTexture( texx ) );
+    HANDLE_ERROR(cudaUnbindTexture( texy ) );
+    HANDLE_ERROR(cudaUnbindTexture( texz ) );
+    HANDLE_ERROR(cudaUnbindTexture( texxold ) );
+    HANDLE_ERROR(cudaUnbindTexture( texyold ) );
+    HANDLE_ERROR(cudaUnbindTexture( texzold ) );
+    HANDLE_ERROR(cudaUnbindTexture( texvx ) );
+    HANDLE_ERROR(cudaUnbindTexture( texvy ) );
+    HANDLE_ERROR(cudaUnbindTexture( texvz ) );
+    HANDLE_ERROR(cudaUnbindTexture( texFx ) );
+    HANDLE_ERROR(cudaUnbindTexture( texFy ) );
+    HANDLE_ERROR(cudaUnbindTexture( texFz ) );
 
     HANDLE_ERROR( cudaFree( P->x ) );
     HANDLE_ERROR( cudaFree( P->y ) );
@@ -536,16 +539,26 @@ void exit(Particles* P) {
     HANDLE_ERROR( cudaFree( P->vx ) );
     HANDLE_ERROR( cudaFree( P->vy ) );
     HANDLE_ERROR( cudaFree( P->vz ) );
+    HANDLE_ERROR( cudaFree( Fx ) );
+    HANDLE_ERROR( cudaFree( Fy ) );
+    HANDLE_ERROR( cudaFree( Fz ) );
 
-   cudaFree(dev_w);
-   cudaFree(dev_v);
-   cudaFree(dev_k);
-   cudaFree(dev_hist);
+   HANDLE_ERROR(cudaFree(dev_w));
+   HANDLE_ERROR(cudaFree(dev_v));
+   HANDLE_ERROR(cudaFree(dev_k));
+   HANDLE_ERROR(cudaFree(dev_hist));
 
  
 }
 
 void Move_gpu(Particles *P) {
+
+ float* fx,*fy,*fz;
+ fx = Fx;
+ fy = Fy;
+ fz = Fz;
+
+ force_gpu<<<bl,th_verlet>>>(fx,fy,fz);
 
  float*xold,*yold,*zold,*x,*y,*z,*vx,*vy,*vz;
  xold = P->xold;
@@ -558,7 +571,7 @@ void Move_gpu(Particles *P) {
  vy = P->vy;
  vz = P->vz;
 
- verlet_gpu<<<bl,th_verlet>>>(xold,yold,zold,x,y,z,vx,vy,vz);
+ verlet_gpu<<<bl,th_kinetic>>>(xold,yold,zold,x,y,z,vx,vy,vz);
 
  //cudaDeviceSynchronize();
 
@@ -566,56 +579,73 @@ void Move_gpu(Particles *P) {
 
 //method of atom decomposition ---> each block calculate force for its own particle (ip = blockIdx.x)
 // threads in each block calculate the corresponding force acting on the block-particle
-__global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,float*z,float*vx,float*vy,float*vz){
+__global__ void force_gpu(float*fx,float*fy,float*fz){
 
-//shared memory, to store force
 	__shared__ float f0[th_verlet];
 	__shared__ float f1[th_verlet];
 	__shared__ float f2[th_verlet];
-	float xnew,ynew,znew;
 	float temp0,temp1,temp2;
 	float dvec[3];
 	float dr;
 	int tid;
 	int cacheIndex = threadIdx.x;
 	int ip = blockIdx.x;
-	while (ip < gpu_npart ) { //cycle over particles
+	while (ip < gpu_npart ) {
 		tid = threadIdx.x;
 		temp0 =0;
 		temp1 =0;
 		temp2 =0;
-		while( tid<gpu_npart ) {//Force acting on particle ip
+		while( tid<gpu_npart ) {
 			dvec[0] = Pbc_gpu(tex1Dfetch(texx,ip)-tex1Dfetch(texx,tid)); 
 			dvec[1] = Pbc_gpu(tex1Dfetch(texy,ip)-tex1Dfetch(texy,tid)); 
 			dvec[2] = Pbc_gpu(tex1Dfetch(texz,ip)-tex1Dfetch(texz,tid));
 			dr=sqrt(dvec[0]*dvec[0]+dvec[1]*dvec[1]+dvec[2]*dvec[2]);
-			if (dr<gpu_rcut && dr>0) {//Compute forces as -Grad_ip V(r)
+			if (dr<gpu_rcut && dr>0) {
 				temp0 += dvec[0] * (48.0/pow(dr,14) - 24.0/pow(dr,8)); 
-				temp1 += dvec[1] * (48.0/pow(dr,14) - 24.0/pow(dr,8));
-				temp2 += dvec[2] * (48.0/pow(dr,14) - 24.0/pow(dr,8));
+				temp1 += dvec[1] * (48.0/pow(dr,14) - 24.0/pow(dr,8)); 
+				temp2 += dvec[2] * (48.0/pow(dr,14) - 24.0/pow(dr,8)); 
 			}
 			tid += blockDim.x;
 		}
 		f0[cacheIndex] = temp0;		
-		f1[cacheIndex] = temp1;
+		f1[cacheIndex] = temp1;	
 		f2[cacheIndex] = temp2;	
 		__syncthreads();
 		tid = blockDim.x/2;
-		while (tid !=0) {//putting all contributes in f[0]
+		while (tid !=0) {
 			if (cacheIndex < tid) {
 				f0[cacheIndex] += f0[cacheIndex+tid];
-				f1[cacheIndex] += f1[cacheIndex+tid];	
+				f1[cacheIndex] += f1[cacheIndex+tid];
 				f2[cacheIndex] += f2[cacheIndex+tid];
+
+
 			}
 			__syncthreads();
 			tid /= 2;
 		}
+	
+	if (cacheIndex == 0) {
 
-	if (cacheIndex == 0) {//Verlet integration scheme
+    		fx[ip] = f0[0];
+		fy[ip] = f1[0];
+		fz[ip] = f2[0];
+		}
+	
+		ip += gridDim.x;
+	}		
+}
 
-		xnew = Pbc_gpu( 2.0 * tex1Dfetch(texx,ip) - tex1Dfetch(texxold,ip) + f0[0] *gpu_delta*gpu_delta);
-		ynew = Pbc_gpu( 2.0 * tex1Dfetch(texy,ip) - tex1Dfetch(texyold,ip) + f1[0] *gpu_delta*gpu_delta);
-		znew = Pbc_gpu( 2.0 * tex1Dfetch(texz,ip) - tex1Dfetch(texzold,ip) + f2[0] *gpu_delta*gpu_delta);
+//aggiornamento delle posizioni tramite verlet
+__global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,float*z,float*vx,float*vy,float*vz){
+
+	float xnew,ynew,znew;
+	int ip = threadIdx.x+blockDim.x*blockIdx.x;
+
+	while (ip < gpu_npart ) {
+
+		xnew = Pbc_gpu( 2.0 * tex1Dfetch(texx,ip) - tex1Dfetch(texxold,ip) +  tex1Dfetch(texFx,ip)*gpu_delta*gpu_delta);
+		ynew = Pbc_gpu( 2.0 * tex1Dfetch(texy,ip) - tex1Dfetch(texyold,ip) +  tex1Dfetch(texFy,ip)*gpu_delta*gpu_delta);
+		znew = Pbc_gpu( 2.0 * tex1Dfetch(texz,ip) - tex1Dfetch(texzold,ip) +  tex1Dfetch(texFz,ip)*gpu_delta*gpu_delta);
 
 		vx[ip] = Pbc_gpu(xnew - tex1Dfetch(texxold,ip)) / (2.0 * gpu_delta);
     		vy[ip] = Pbc_gpu(ynew - tex1Dfetch(texyold,ip)) / (2.0 * gpu_delta);
@@ -628,10 +658,11 @@ __global__ void verlet_gpu(float*xold,float*yold,float*zold,float*x,float*y,floa
     		x[ip] = xnew;
    		y[ip] = ynew;
     		z[ip] = znew;
-		}
-		ip += gridDim.x;
+	
+		ip += gridDim.x*blockDim.x;
 	}		
 }
+
 
 __global__ void  measure_kinetic(Lock lock,float *k) {
 

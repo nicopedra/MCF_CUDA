@@ -3,7 +3,7 @@ FLAGS=-std=c++11 -O3 -pg
 INCLUDE=-I/home/vicini/NVIDIA_GPU_Computing_SDK/CUDALibraries/common/inc/ -I/home/vicini/NVIDIA_GPU_Computing_SDK/shared/inc/ -I../../common/ -I/usr/local/cuda/include/
 OBJS=-Wno-deprecated-gpu-targets
 
-NVCC=nvcc -arch=sm_20
+NVCC=nvcc -arch=sm_20 -Xptxas=-v,-abi=no -Xptxas=-fastimul
 
 ECHO=/bin/echo
 

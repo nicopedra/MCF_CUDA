@@ -1,3 +1,5 @@
+# È ANCORA IN FASE DI AGGIORNAMENTO
+
 ## TEST ,BLOCKS THREADS,  
 
 ### numero particelle 4000 (max)  

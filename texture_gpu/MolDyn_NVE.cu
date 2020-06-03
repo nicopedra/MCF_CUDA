@@ -51,12 +51,12 @@ cout << "                tentativo numero: " << tentativo << endl;
   cout << "Ekin = " << stima_kin_gpu << endl << endl;  //questa deve venire 1.2, perchè ho riscalato le velocità per avere
 					              // temperatura = 0.8
 
+  N = 100; //number of blocks for data_blocking analysis
+
   HANDLE_ERROR( cudaEventCreate( &P.start ));
   HANDLE_ERROR( cudaEventCreate( &P.stop ));
   HANDLE_ERROR( cudaEventRecord( P.start, 0 ) );
   cout<< "\n\n";
-
-  N = 100; //number of blocks for data_blocking analysis
 
  //doing MD steps
   for(int istep=1; istep <= nstep; ++istep) {

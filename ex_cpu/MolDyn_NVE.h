@@ -10,18 +10,21 @@ using namespace std;
 const int m_props=5;
 const int nbins=100;
 int n_props;
-int iv,ik,it,ie;
+//for measure istantaneous properties
 float stima_pot, stima_kin, stima_etot, stima_temp,stima_press;
+//tail correction due to rcutoff
 float vtail;
 float ptail;
+//to save mean temperature
 float m_temp;
 float accettazione;
+//for gdir
 float bin_size;
 vector<vector<float>> gdir(nbins);
+//for instantaneous values and then do data analysis
 vector<vector<float>> properties(m_props);
+//parameter to restart
 int restart;
-
-float acc,att;
 
 //configuration
 float *x,*y,*z,*xold,*yold,*zold,*vx,*vy,*vz;
@@ -30,7 +33,7 @@ float *x,*y,*z,*xold,*yold,*zold,*vx,*vy,*vz;
 int npart;
 float energy,temp,vol,rho,box,rcut;
 
-// simulation
+// parameters for simulation
 int nstep, iprint, seed;
 float delta;
 
@@ -68,7 +71,6 @@ vector<float> last_data_from_datablocking(int,vector<float>);
 
 void Input(void){ //Prepare all stuff for the simulation
   ifstream ReadInput,ReadConf,ReadPrecedentConf;
-  float ep, ek, pr, et, vir;
 
   cout << "Classic Lennard-Jones fluid        " << endl;
   cout << "Molecular dynamics simulation in NVE ensemble  " << endl << endl;
@@ -115,9 +117,9 @@ void Input(void){ //Prepare all stuff for the simulation
 
   ReadInput >> rcut;
   cout << "cutoff r= " << rcut << endl;
-  ReadInput >> delta;//guardo slide per capire le unità di misura. viene usato l'epsilon dell'argon
-  ReadInput >> nstep;//ogni quanto stampare a che punto sono della simulazione
-  ReadInput >> iprint;
+  ReadInput >> delta;//delta t, lo step temporale, abbastanza piccolo per conservare l'energia
+  ReadInput >> nstep;
+  ReadInput >> iprint;//ogni quanto stampare a video il punto della simulazione a cui sono arrivato
   cout << "The program integrates Newton equations with the Verlet method " << endl;
   cout << "Time step = " << delta << endl;
   cout << "Number of steps = " << nstep << endl << endl;

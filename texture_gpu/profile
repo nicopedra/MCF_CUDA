@@ -1,215 +1,53 @@
 UNA SINGOLA SIMULAZIONE SOLIDO , 108 PARTICELLE, 10'000 STEP
 
-TEMPO TOTALE ESECUZIONE : 1010.0 ms
+TEMPO TOTALE ESECUZIONE : 953.5 ms
 
-NUMERO DI BLOCCHI 64 , NUMERO DI THREADS PER BLOCCO 128
+NUMERO DI BLOCCHI 128 , NUMERO DI THREADS PER BLOCCO 128
+
+ptxas warning : 'option -abi=no' might get deprecated in future
+ptxas info    : 320 bytes gmem, 20 bytes cmem[2], 56 bytes cmem[14]
+ptxas info    : Compiling entry function '_Z10verlet_gpuPfS_S_S_S_S_S_S_S_' for 'sm_20'
+ptxas info    : Used 23 registers, 104 bytes cmem[0], 44 bytes cmem[16], 9 textures
+ptxas info    : Compiling entry function '_Z18measure_properties4LockPfS0_S0_' for 'sm_20'
+ptxas info    : Used 30 registers, 1024 bytes smem, 64 bytes cmem[0], 100 bytes cmem[16], 3 textures
+ptxas info    : Compiling entry function '_Z9force_gpuPfS_S_' for 'sm_20'
+ptxas info    : Used 34 registers, 1536 bytes smem, 56 bytes cmem[0], 96 bytes cmem[16], 3 textures
+ptxas info    : Compiling entry function '_Z15measure_kinetic4LockPf' for 'sm_20'
+ptxas info    : Used 13 registers, 512 bytes smem, 48 bytes cmem[0], 3 textures
 
 ############################################## NVPROF #################################
 
-==7480== Profiling application: ./MolDyn_NVE.x 0
-==7480== Profiling result:
+==24565== Profiling application: ./MolDyn_NVE.x 0
+==24565== Profiling result:
 Time(%)      Time     Calls       Avg       Min       Max  Name
- 75.88%  514.13ms     10000  51.413us  48.108us  52.642us  verlet_gpu(float*, float*, float*, float*, float*, float*, float*, float*, float*)
- 13.02%  88.245ms      1001  88.157us  84.888us  91.356us  measure_pot_virial(Lock, float*, float*, float*)
-  8.02%  54.320ms      1001  54.265us  51.480us  58.891us  measure_kinetic(Lock, float*)
-  1.64%  11.116ms      4010  2.7720us  2.7200us  13.089us  [CUDA memcpy DtoH]
-  1.44%  9.7512ms      5005  1.9480us  1.7920us  12.640us  [CUDA memset]
-  0.00%  25.666us        14  1.8330us  1.7920us  2.0160us  [CUDA memcpy HtoD]
+ 66.49%  491.53ms     10000  49.153us  41.107us  55.016us  force_gpu(float*, float*, float*)
+ 19.12%  141.39ms      1001  141.25us  125.82us  423.30us  measure_kinetic(Lock, float*)
+  7.64%  56.480ms     10000  5.6480us  5.4820us  7.7490us  verlet_gpu(float*, float*, float*, float*, float*, float*, float*, float*, float*)
+  4.27%  31.573ms      1001  31.541us  30.542us  43.501us  measure_properties(Lock, float*, float*, float*)
+  1.49%  11.048ms      4010  2.7550us  2.7200us  12.704us  [CUDA memcpy DtoH]
+  0.98%  7.2546ms      3003  2.4150us  1.7920us  13.185us  [CUDA memset]
+  0.00%  25.792us        14  1.8420us  1.7920us  2.0160us  [CUDA memcpy HtoD]
 
-==7480== API calls:
+==24565== API calls:
 Time(%)      Time     Calls       Avg       Min       Max  Name
- 42.16%  415.37ms     12002  34.608us  31.932us  96.582us  cudaLaunch
- 17.90%  176.35ms      4019  43.879us  10.201us  151.79us  cudaMemcpy
- 16.64%  163.94ms      3016  54.357us  1.8230us  295.78us  cudaFree
- 13.78%  135.76ms      1014  133.88us  7.9120us  120.89ms  cudaMalloc
-  5.68%  56.001ms      5005  11.189us  9.4690us  560.35us  cudaMemset
-  2.78%  27.424ms     96006     285ns     231ns  597.77us  cudaSetupArgument
-  0.62%  6.0615ms     12002     505ns     385ns  547.04us  cudaConfigureCall
-  0.35%  3.4671ms       364  9.5240us     285ns  401.83us  cuDeviceGetAttribute
-  0.04%  420.37us         4  105.09us  74.885us  158.55us  cuDeviceTotalMem
-  0.03%  332.04us         4  83.008us  76.969us  94.695us  cuDeviceGetName
-  0.01%  61.970us         5  12.394us  11.659us  14.428us  cudaMemcpyToSymbol
-  0.00%  45.101us         9  5.0110us  2.3900us  22.223us  cudaBindTexture
-  0.00%  35.037us         9  3.8930us  1.3950us  17.597us  cudaUnbindTexture
-  0.00%  30.907us         2  15.453us  7.3260us  23.581us  cudaEventRecord
-  0.00%  8.3240us         2  4.1620us  1.6110us  6.7130us  cudaEventCreate
-  0.00%  8.2500us        12     687ns     290ns  2.7680us  cuDeviceGet
-  0.00%  6.8720us         1  6.8720us  6.8720us  6.8720us  cudaEventSynchronize
-  0.00%  6.4400us         1  6.4400us  6.4400us  6.4400us  cudaEventElapsedTime
-  0.00%  3.9340us         3  1.3110us     533ns  2.4650us  cuDeviceGetCount
-
-##################################### GPROF ############################################
-
-
-Flat profile:
-
-Each sample counts as 0.01 seconds.
- no time accumulated
-
-  %   cumulative   self              self     total           
- time   seconds   seconds    calls  Ts/call  Ts/call  name    
-  0.00      0.00     0.00     2859     0.00     0.00  void Print<float>(std::vector<float, std::allocator<float> >, std::string)
-  0.00      0.00     0.00      101     0.00     0.00  Measure(Particles*)
-  0.00      0.00     0.00       10     0.00     0.00  std::string __gnu_cxx::__to_xstring<std::string, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...) [clone .constprop.85]
-  0.00      0.00     0.00        5     0.00     0.00  data_blocking_MD(int)
-  0.00      0.00     0.00        5     0.00     0.00  last_data_from_datablocking(int, std::vector<float, std::allocator<float> >)
-  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I_n_props
-  0.00      0.00     0.00        1     0.00     0.00  __sti____cudaRegisterAll_45_tmpxft_00001ba2_00000000_9_MolDyn_NVE_cpp1_ii_gdir()
-
- %         the percentage of the total running time of the
-time       program used by this function.
-
-cumulative a running sum of the number of seconds accounted
- seconds   for by this function and those listed above it.
-
- self      the number of seconds accounted for by this
-seconds    function alone.  This is the major sort for this
-           listing.
-
-calls      the number of times this function was invoked, if
-           this function is profiled, else blank.
-
- self      the average number of milliseconds spent in this
-ms/call    function per call, if this function is profiled,
-	   else blank.
-
- total     the average number of milliseconds spent in this
-ms/call    function and its descendents per call, if this
-	   function is profiled, else blank.
-
-name       the name of the function.  This is the minor sort
-           for this listing. The index shows the location of
-	   the function in the gprof listing. If the index is
-	   in parenthesis it shows where it would appear in
-	   the gprof listing if it were to be printed.
-
-
-Copyright (C) 2012-2016 Free Software Foundation, Inc.
-
-Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty provided the copyright
-notice and this notice are preserved.
-
-
-		     Call graph (explanation follows)
-
-
-granularity: each sample hit covers 2 byte(s) no time propagated
-
-index % time    self  children    called     name
-                0.00    0.00       8/2859        data_blocking_MD(int) [11]
-                0.00    0.00      40/2859        data_blocking(int, std::vector<float, std::allocator<float> >, float, std::string) [18]
-                0.00    0.00     848/2859        last_data_from_datablocking(int, std::vector<float, std::allocator<float> >) [12]
-                0.00    0.00    1963/2859        Measure(Particles*) [9]
-[8]      0.0    0.00    0.00    2859         void Print<float>(std::vector<float, std::allocator<float> >, std::string) [8]
------------------------------------------------
-                0.00    0.00     101/101         data_blocking_MD(int) [11]
-[9]      0.0    0.00    0.00     101         Measure(Particles*) [9]
-                0.00    0.00    1963/2859        void Print<float>(std::vector<float, std::allocator<float> >, std::string) [8]
------------------------------------------------
-                0.00    0.00       1/10          __device_stub__Z10verlet_gpuPfS_S_S_S_S_S_S_S_(float*, float*, float*, float*, float*, float*, float*, float*, float*) [28]
-                0.00    0.00       4/10          print_properties() [21]
-                0.00    0.00       5/10          data_blocking_MD(int) [11]
-[10]     0.0    0.00    0.00      10         std::string __gnu_cxx::__to_xstring<std::string, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...) [clone .constprop.85] [10]
------------------------------------------------
-                0.00    0.00       1/5           __device_stub__Z18measure_pot_virial4LockPfS0_S0_(Lock&, float*, float*, float*) [29]
-                0.00    0.00       4/5           print_properties() [21]
-[11]     0.0    0.00    0.00       5         data_blocking_MD(int) [11]
-                0.00    0.00     101/101         Measure(Particles*) [9]
-                0.00    0.00       8/2859        void Print<float>(std::vector<float, std::allocator<float> >, std::string) [8]
-                0.00    0.00       5/10          std::string __gnu_cxx::__to_xstring<std::string, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...) [clone .constprop.85] [10]
-                0.00    0.00       5/5           last_data_from_datablocking(int, std::vector<float, std::allocator<float> >) [12]
------------------------------------------------
-                0.00    0.00       5/5           data_blocking_MD(int) [11]
-[12]     0.0    0.00    0.00       5         last_data_from_datablocking(int, std::vector<float, std::allocator<float> >) [12]
-                0.00    0.00     848/2859        void Print<float>(std::vector<float, std::allocator<float> >, std::string) [8]
------------------------------------------------
-                0.00    0.00       1/1           void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float const&>(float const&) [43]
-[13]     0.0    0.00    0.00       1         _GLOBAL__sub_I_n_props [13]
------------------------------------------------
-                0.00    0.00       1/1           void std::vector<float, std::allocator<float> >::_M_emplace_back_aux<float const&>(float const&) [43]
-[14]     0.0    0.00    0.00       1         __sti____cudaRegisterAll_45_tmpxft_00001ba2_00000000_9_MolDyn_NVE_cpp1_ii_gdir() [14]
------------------------------------------------
-
- This table describes the call tree of the program, and was sorted by
- the total amount of time spent in each function and its children.
-
- Each entry in this table consists of several lines.  The line with the
- index number at the left hand margin lists the current function.
- The lines above it list the functions that called this function,
- and the lines below it list the functions this one called.
- This line lists:
-     index	A unique number given to each element of the table.
-		Index numbers are sorted numerically.
-		The index number is printed next to every function name so
-		it is easier to look up where the function is in the table.
-
-     % time	This is the percentage of the `total' time that was spent
-		in this function and its children.  Note that due to
-		different viewpoints, functions excluded by options, etc,
-		these numbers will NOT add up to 100%.
-
-     self	This is the total amount of time spent in this function.
-
-     children	This is the total amount of time propagated into this
-		function by its children.
-
-     called	This is the number of times the function was called.
-		If the function called itself recursively, the number
-		only includes non-recursive calls, and is followed by
-		a `+' and the number of recursive calls.
-
-     name	The name of the current function.  The index number is
-		printed after it.  If the function is a member of a
-		cycle, the cycle number is printed between the
-		function's name and the index number.
-
-
- For the function's parents, the fields have the following meanings:
-
-     self	This is the amount of time that was propagated directly
-		from the function into this parent.
-
-     children	This is the amount of time that was propagated from
-		the function's children into this parent.
-
-     called	This is the number of times this parent called the
-		function `/' the total number of times the function
-		was called.  Recursive calls to the function are not
-		included in the number after the `/'.
-
-     name	This is the name of the parent.  The parent's index
-		number is printed after it.  If the parent is a
-		member of a cycle, the cycle number is printed between
-		the name and the index number.
-
- If the parents of the function cannot be determined, the word
- `<spontaneous>' is printed in the `name' field, and all the other
- fields are blank.
-
- For the function's children, the fields have the following meanings:
-
-     self	This is the amount of time that was propagated directly
-		from the child into the function.
-
-     children	This is the amount of time that was propagated from the
-		child's children to the function.
-
-     called	This is the number of times the function called
-		this child `/' the total number of times the child
-		was called.  Recursive calls by the child are not
-		listed in the number after the `/'.
-
-     name	This is the name of the child.  The child's index
-		number is printed after it.  If the child is a
-		member of a cycle, the cycle number is printed
-		between the name and the index number.
-
- If there are any cycles (circles) in the call graph, there is an
- entry for the cycle-as-a-whole.  This entry shows who called the
- cycle (as parents) and the members of the cycle (as children.)
- The `+' recursive calls entry shows the number of function calls that
- were internal to the cycle, and the calls entry for each member shows,
- for that member, how many times it was called from other members of
- the cycle.
+ 64.88%  932.43ms     22002  42.379us  39.123us  586.33us  cudaLaunch
+ 15.92%  228.79ms      4019  56.927us  12.170us  438.37us  cudaMemcpy
+  9.92%  142.60ms      1017  140.22us  5.9710us  127.81ms  cudaMalloc
+  3.35%  48.137ms      3019  15.944us  1.8550us  277.53us  cudaFree
+  2.46%  35.337ms      3003  11.767us  9.7540us  28.520us  cudaMemset
+  2.37%  33.993ms    126006     269ns     231ns  549.67us  cudaSetupArgument
+  0.77%  11.128ms     22002     505ns     361ns  543.85us  cudaConfigureCall
+  0.25%  3.5691ms       364  9.8050us     272ns  568.38us  cuDeviceGetAttribute
+  0.03%  412.27us         4  103.07us  76.258us  172.64us  cuDeviceTotalMem
+  0.02%  344.25us         4  86.061us  77.949us  94.368us  cuDeviceGetName
+  0.01%  102.93us         5  20.586us  12.043us  36.094us  cudaMemcpyToSymbol
+  0.00%  57.485us        12  4.7900us  2.5530us  26.244us  cudaBindTexture
+  0.00%  49.237us        12  4.1030us  1.2070us  22.771us  cudaUnbindTexture
+  0.00%  33.651us         2  16.825us  9.2100us  24.441us  cudaEventRecord
+  0.00%  31.227us         1  31.227us  31.227us  31.227us  cudaSetDevice
+  0.00%  9.3410us         2  4.6700us  1.3730us  7.9680us  cudaEventCreate
+  0.00%  7.0770us         1  7.0770us  7.0770us  7.0770us  cudaEventSynchronize
+  0.00%  6.9610us        12     580ns     270ns  2.7800us  cuDeviceGet
+  0.00%  4.0940us         1  4.0940us  4.0940us  4.0940us  cudaEventElapsedTime
+  0.00%  3.7730us         3  1.2570us     456ns  2.6350us  cuDeviceGetCount
 

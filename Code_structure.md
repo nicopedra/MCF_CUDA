@@ -61,17 +61,15 @@ All'inizio del codice viene definita (o non definita) tramite *define* la variab
 - un ciclo *while* che controlla la differenza tra la temperatura media raggiunta dal sistema e la temperatura target. Se tale differenza (in valore assoluto) è minore di 2 sigma (ovvero di due volte l'errore ottenuto dall'analisi dati) allora l'equilibrazione si considera conclusa.    
 - Ogni ciclo while ricomincia ponendo il parametro *restart* uguale a 1. In questo modo le configurazioni iniziali vengono assegnate (all'inizio del ciclo) copiando le configurazioni assunte dalla simulazione precedente (ovvera quella del ciclo precedente) e vengono di nuovo riscalate le velocità (per far raggiungere al mio sistema la temperatura target).
 
-## TEXTURE MEMORY, PERCHÈ
+## MEMORIE UTILIZZATE
 
-Per il primo tentativo di sviluppo del codice ho usato interamente la **global memory**. Ma mi sono reso conto di un piccolo errore (che comunque non andava a modificare significativamente i risultati ottenuti): 
-- la funzione __global__ *verlet_gpu* aggiorna il contenuto delle variabili x,y,z,xold,zold,yold. Ma allo stesso tempo utilizza il contenuto di queste variabili.  
-Tuttavia la logica con cui calcolare la forza agente su ogni particella deve essere:  
-	+ sistema fermo e calcolo ogni singola forza agente sulla particella *ip* dovuta alla presenza di tutte le altre particelle *j*, per ogni *ip*.
-	+ calcolate tutte le forze eseguo l'aggiornamento delle posizioni delle particelle *ip*.  
-- con l'utilizzo della memoria global invece, tramite la funzione verlet c'era il rischio di utilizzare coordinate già aggiornate per calcolare le forze delle particelle rimanenti (non ancora aggiornate). Cioè il rischio di calcolare le forze senza che il sistema stia fermo, ma dando la precedenza ad alcune particelle di muoversi prima rispetto ad altre.   
-- utilizzando la **texture memory** invece è possibile farlo. La memoria a cui sta puntando la texture memory viene aggiornata solo __dopo__ l'esecuzione del kernel.  
-Cioè non è possibile in uno stesso kernel modificare il contenuto di un indirizzo di memoria a cui sta puntando la memoria texture e prentendere , nello stesso kernel, di utilizzare quel nuovo contenuto con la chiamata tex1dfetch per fare i conti. Se si chiama la memoria texture allora questa utilizza il contenuto assegnato durante il precedente kernel.  
-Una funziona di prova è presente nella cartella *prova* in lcm, nello script sum\_vec.cu (andare a vedere e fare uno script apposta)
+Ho svolto tre diversi codici utilizzando tre diverse memorie:  
+- texture memory
+- global memory 
+- unified memory  
+
+Sarà interessante testare le varie performance basandomi sull'utilizzo di queste memorie. La cosa interessante è che il numero di registri usati per thread è più grande nella global memory e nella unified memory rispetto alla texture memory.
+
 
     
 

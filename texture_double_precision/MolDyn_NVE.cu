@@ -1,6 +1,6 @@
 #include "MolDyn_NVE.h"
 
-#define equilibration
+//#define equilibration
 
 using namespace std;
 
