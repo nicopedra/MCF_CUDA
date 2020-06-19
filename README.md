@@ -3,13 +3,13 @@
 Dentro *texture_gpu* sono presenti i file relativi all'implementazione in CUDA del codice di MD  
 presente nella cartella *ex_cpu* utilizzando la memoria *texture*.    
 Dentro *texture_double_precision* sono presenti i file relativi all'implementazione in CUDA del codice di MD  
-presente nella cartella *ex_cpu* utilizzando la memoria *texture* ma con precisione double.    
+presente nella cartella *ex_cpu_double* utilizzando la memoria *texture* ma con precisione double.    
 Dentro *global_gpu* sono presenti i file relativi all'implementazione in CUDA del codice di MD  
 presente nella cartella *ex_cpu* utilizzando interamente la memoria *global*.    
 Dentro *portable_gpu* sono presenti i file relativi all'implementazione in CUDA del codice di MD  
 presente nella cartella *ex_cpu* utilizzando la memoria *unified* supportata dal device.      
   
-È presente inoltre una cartella PRIMI\_VICINI, dentro:  
+È presente inoltre una cartella List\_method, dentro:  
 - cartella ex\_cpu contenente l'implementazione della *verlet list*  
 - verlet\_list contenente l'implementazione in CUDA del metodo Verlet List, usando però una matrice di booleani per indicare i primi vicini  
   
@@ -26,7 +26,9 @@ Questo numero è molto spesso legato al massimo numero di thread che contemporan
 Se ad esempio per un kernel il massimo numero di registri utilizzati per thread è pari a 32, e nel kernel un singolo thread usa 30 registri allora utilizzare 1024 threads per blocco peggiorerà la performance, mentre usarne solo 128 la migliorerà estremamente.   
 In definitiva per ogni kernel lanciato è stato prescelto un numero di threads da lanciare.   
  
-Ho simulato al massimo un sistema contenente 4000 particelle (nella cartella *time* sono presenti dei grafici relativi al tempo e all'efficienza).    
+Ho simulato al massimo un sistema contenente 4000 particelle
+  
+Nel jupyter notebook sono presenti alcuni risultati e confronti ottenuti   
 
 I test fatti sono stati eseguiti su un solido (input.solid) eseguendo una singola simulazione con nstep = 10000.  
 dentro input.dat (il file letto dalla funzione input per inizializzare i parametri) viene spiegato chi sono i vari parametri   
