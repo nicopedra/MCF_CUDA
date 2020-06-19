@@ -29,7 +29,7 @@ int main(int argc, char** argv){
 cout << "                tentativo numero: " << tentativo << endl;
         cout <<"################################################################" << endl;
         if (tentativo == 1)
-                restart = 0;
+                restart = 1;
         else
                 restart = 1;
 
@@ -53,18 +53,24 @@ cout << "                tentativo numero: " << tentativo << endl;
 
   N = 100; //number of blocks for data_blocking analysis
 
+  cout << "starting measuring time" << endl;
   HANDLE_ERROR( cudaEventCreate( &P.start ));
   HANDLE_ERROR( cudaEventCreate( &P.stop ));
   HANDLE_ERROR( cudaEventRecord( P.start, 0 ) );
   cout<< "\n\n";
-
  //doing MD steps
   for(int istep=1; istep <= nstep; ++istep) {
      Move_gpu(&P); //move with verlet-algorithm
      if (istep%10 == 0) Measure(&P); //measure physical properties
      if (istep%iprint == 0) cout << "Number of time-steps: " << istep << endl; 
   }
-  
+
+  HANDLE_ERROR( cudaEventRecord( P.stop, 0 ) );
+  HANDLE_ERROR( cudaEventSynchronize( P.stop ) );
+  HANDLE_ERROR( cudaEventElapsedTime( &P.TotalTime,
+					P.start, P.stop ) );
+
+ cout << "stop time" << endl;
   //save instantaneous results on file
   print_properties(); 
   //doing data analysis and save on file the results
@@ -78,10 +84,6 @@ cout << "                tentativo numero: " << tentativo << endl;
   //overwrite config.0 and config.final
   ConfFinal(&P);   
 
-  HANDLE_ERROR( cudaEventRecord( P.stop, 0 ) );
-  HANDLE_ERROR( cudaEventSynchronize( P.stop ) );
-  HANDLE_ERROR( cudaEventElapsedTime( &P.TotalTime,
-                                        P.start, P.stop ) );
   ofstream Time("simulation.time",ios::app);
   Time << npart << "\t" << P.TotalTime << endl;
   Time.close();

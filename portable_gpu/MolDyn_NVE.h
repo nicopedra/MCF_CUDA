@@ -9,10 +9,10 @@
 #include <cuda.h>
 #include "lock.h"
 
-#define bl 128//512
+#define bl 512//512
 #define th_verlet 128 //128
-#define th_measure 128 //1024
-#define th_kinetic 128 //1024
+#define th_measure 1024 //1024
+#define th_kinetic 1024 //1024
 using namespace std;
 //for initialization
 ifstream ReadInput,ReadConf,ReadPrecedentConf;
@@ -479,7 +479,7 @@ void Move_gpu(Particles *P) {
 //forces
  force_gpu<<<bl,th_verlet>>>(P->fx,P->fy,P->fz,P->x,P->y,P->z);
 //moving particles with Verlet algorithm
- verlet_gpu<<<bl,th_verlet>>>(P->xold,P->yold,P->zold,P->x,P->y,P->z,P->vx,P->vy,P->vz,P->fx,P->fy,P->fz);
+ verlet_gpu<<<bl,th_kinetic/2>>>(P->xold,P->yold,P->zold,P->x,P->y,P->z,P->vx,P->vy,P->vz,P->fx,P->fy,P->fz);
 
 }
 
@@ -872,7 +872,7 @@ vector<float> data(2);
 	 v_mean.clear();
  }
 
- accettazione = 2*data[1];
+ accettazione = data[1];
  m_temp = data[0];
  //fatta l'analisi dati controllo a che temperatura si trova il sistema
  cout << "temperatura di ora: " << data[0] << " , con incertezza: " << data[1]<< endl;

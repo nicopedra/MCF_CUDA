@@ -6,6 +6,10 @@
 
 using namespace std;
 
+//reading input parameters
+ifstream ReadInput,ReadConf,ReadPrecedentConf;
+string file_start;
+
 //parameters, observables
 const int m_props=5;
 const int nbins=100;
@@ -40,6 +44,8 @@ float delta;
 //####################### functions ###############################
 void Input(void);
 
+void exit();
+
 void Move(void);
 
 void ConfFinal(void);
@@ -69,16 +75,9 @@ vector<float> last_data_from_datablocking(int,vector<float>);
 
 //########################### IMPLEMENTAZIONI ##################################
 
-void Input(void){ //Prepare all stuff for the simulation
-  ifstream ReadInput,ReadConf,ReadPrecedentConf;
+void Initialization() {
 
-  cout << "Classic Lennard-Jones fluid        " << endl;
-  cout << "Molecular dynamics simulation in NVE ensemble  " << endl << endl;
-  cout << "Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]" << endl << endl;
-  cout << "The program uses Lennard-Jones units " << endl;
-
-  string file_start;
-  if(restart == 1) {
+if(restart == 1) {
 	  file_start = "config.0";
 	  cout << "reading configurations from precedent simulation: " << endl;
 	  ReadConf.open(file_start);
@@ -91,53 +90,7 @@ void Input(void){ //Prepare all stuff for the simulation
 	  ReadConf >> npart;
   }
 
-  x = new float [npart];
-  y = new float [npart];
-  z = new float [npart];
-  xold = new float [npart];
-  yold = new float [npart];
-  zold = new float [npart];
-  vx = new float [npart];
-  vy = new float [npart];
-  vz = new float [npart];
-
-  seed = 1;    //Set seed for random numbers
-  srand(seed); //Initialize random number generator
-  ReadInput.open("input.dat"); //Read input
-
-  ReadInput >> temp;
-  cout << "target temperature = " << temp << endl;
-  cout << "Number of particles = " << npart << endl;
-  ReadInput >> rho;
-  cout << "Density of particles = " << rho << endl;
-  vol = (float)npart/rho;
-  cout << "Volume of the simulation box = " << vol << endl;
-  box = pow(vol,1.0/3.0);
-  cout << "Edge of the simulation box = " << box << endl;//unità sigma
-
-  ReadInput >> rcut;
-  cout << "cutoff r= " << rcut << endl;
-  ReadInput >> delta;//delta t, lo step temporale, abbastanza piccolo per conservare l'energia
-  ReadInput >> nstep;
-  ReadInput >> iprint;//ogni quanto stampare a video il punto della simulazione a cui sono arrivato
-  cout << "The program integrates Newton equations with the Verlet method " << endl;
-  cout << "Time step = " << delta << endl;
-  cout << "Number of steps = " << nstep << endl << endl;
-  ReadInput.close();
-
-//Prepare array for measurements   //they're just indices
-  n_props = 5; //Number of observables, already add pressure
-
-  //correzioni di tail al potenziale e all ptail
-  vtail = (8.0*M_PI*rho)/(9.0*pow(rcut,9)) - (8.0*M_PI*rho)/(3.0*pow(rcut,3));
-  ptail = (32.0*M_PI*rho)/(9.0*pow(rcut,9)) - (16.0*M_PI*rho)/(3.0*pow(rcut,3));
-  cout << "vtail: " << vtail << endl;
-  cout << "ptail: " << ptail << endl;
-  bin_size = (box*0.5)/nbins; 
-  cout << "size of each bin: " << bin_size << endl;
-
-//Read initial configuration
-  cout << "Read initial configuration from file "+file_start << endl << endl;
+ cout << "Read initial configuration from file "+file_start << endl << endl;
   for (int i=0; i<npart; ++i){
     ReadConf >> x[i] >> y[i] >> z[i];
     x[i] = x[i] * box;
@@ -221,6 +174,89 @@ cout << "initial Ekin = " << stima_kin << endl << endl; //deve venire 1.2 per il
 
 };
 
+
+
+void Input(void){ //Prepare all stuff for the simulation
+  //ifstream ReadInput,ReadConf,ReadPrecedentConf;
+
+  cout << "Classic Lennard-Jones fluid        " << endl;
+  cout << "Molecular dynamics simulation in NVE ensemble  " << endl << endl;
+  cout << "Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]" << endl << endl;
+  cout << "The program uses Lennard-Jones units " << endl;
+
+  //string file_start;
+  if(restart == 1) {
+	  file_start = "config.0";
+	  ReadConf.open(file_start);
+	  ReadConf >> npart;
+  }
+  else    {
+	  file_start = "config.fcc";
+	  ReadConf.open(file_start);
+	  ReadConf >> npart;
+  }
+  ReadConf.close();
+//allocate memory
+  x = new float [npart];
+  y = new float [npart];
+  z = new float [npart];
+  xold = new float [npart];
+  yold = new float [npart];
+  zold = new float [npart];
+  vx = new float [npart];
+  vy = new float [npart];
+  vz = new float [npart];
+
+  seed = 1;    //Set seed for random numbers
+  srand(seed); //Initialize random number generator
+  ReadInput.open("input.dat"); //Read input
+
+  ReadInput >> temp;
+  cout << "target temperature = " << temp << endl;
+  cout << "Number of particles = " << npart << endl;
+  ReadInput >> rho;
+  cout << "Density of particles = " << rho << endl;
+  vol = (float)npart/rho;
+  cout << "Volume of the simulation box = " << vol << endl;
+  box = pow(vol,1.0/3.0);
+  cout << "Edge of the simulation box = " << box << endl;//unità sigma
+
+  ReadInput >> rcut;
+  cout << "cutoff r= " << rcut << endl;
+  ReadInput >> delta;//delta t, lo step temporale, abbastanza piccolo per conservare l'energia
+  ReadInput >> nstep;
+  ReadInput >> iprint;//ogni quanto stampare a video il punto della simulazione a cui sono arrivato
+  cout << "The program integrates Newton equations with the Verlet method " << endl;
+  cout << "Time step = " << delta << endl;
+  cout << "Number of steps = " << nstep << endl << endl;
+  ReadInput.close();
+
+//Prepare array for measurements   //they're just indices
+  n_props = 5; //Number of observables, already add pressure
+
+  //correzioni di tail al potenziale e all ptail
+  vtail = (8.0*M_PI*rho)/(9.0*pow(rcut,9)) - (8.0*M_PI*rho)/(3.0*pow(rcut,3));
+  ptail = (32.0*M_PI*rho)/(9.0*pow(rcut,9)) - (16.0*M_PI*rho)/(3.0*pow(rcut,3));
+  cout << "vtail: " << vtail << endl;
+  cout << "ptail: " << ptail << endl;
+  bin_size = (box*0.5)/nbins; 
+  cout << "size of each bin: " << bin_size << endl;
+};
+
+
+void exit() {
+
+	delete [] x;
+	delete [] y;
+	delete [] z;
+	delete [] xold;
+	delete [] yold;
+	delete [] zold;
+	delete [] vx;
+	delete [] vy;
+	delete [] vz;
+
+}
 
 void Move(void){ //Move particles with Verlet algorithm
   float xnew, ynew, znew, fx[npart], fy[npart], fz[npart];
@@ -317,8 +353,9 @@ void Measure(){ //Properties measurement
 
 
 // g(r)
+  float deltaVr;
   for (int i=0;i<nbins;i++) {
-	   float deltaVr = rho*npart*4.*M_PI/3.*(pow((i+1)*bin_size,3)-pow((i)*bin_size,3));
+	   deltaVr = rho*npart*4.*M_PI/3.*(pow((i+1)*bin_size,3)-pow((i)*bin_size,3));
 	   gdir[i].push_back(hist[i]/deltaVr);
    }
 
@@ -353,7 +390,7 @@ void print_properties() {
 }
 
 void Print(vector<float> v, string name) {
-   fstream fd; fd.open(name,ios::app);
+   ofstream fd; fd.open(name,ios::app);
    for (auto& el : v) fd << el << endl;
    fd.close();
 }

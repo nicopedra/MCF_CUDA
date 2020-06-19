@@ -1,0 +1,59 @@
+UNA SINGOLA SIMULAZIONE SOLIDO , 108 PARTICELLE, 10'000 STEP
+
+TEMPO TOTALE ESECUZIONE : 1253.4 ms
+
+NUMERO DI BLOCCHI 108 , NUMERO DI THREADS PER BLOCCO 128
+
+ptxas warning : 'option -abi=no' might get deprecated in future
+ptxas info    : 320 bytes gmem, 28 bytes cmem[2], 56 bytes cmem[14]
+ptxas info    : Compiling entry function '_Z10verlet_gpuPfS_S_S_S_S_S_S_S_' for 'sm_20'
+ptxas info    : Used 23 registers, 104 bytes cmem[0], 44 bytes cmem[16], 9 textures
+ptxas info    : Compiling entry function '_Z18measure_properties4LockPfS0_S0_' for 'sm_20'
+ptxas info    : Used 30 registers, 1024 bytes smem, 64 bytes cmem[0], 100 bytes cmem[16], 3 textures
+ptxas info    : Compiling entry function '_Z11update_listPb' for 'sm_20'
+ptxas info    : Used 16 registers, 40 bytes cmem[0], 12 bytes cmem[16], 3 textures
+ptxas info    : Compiling entry function '_Z9force_gpuPfS_S_Pb' for 'sm_20'
+ptxas info    : Used 34 registers, 1536 bytes smem, 64 bytes cmem[0], 96 bytes cmem[16], 3 textures
+ptxas info    : Compiling entry function '_Z15measure_kinetic4LockPf' for 'sm_20'
+ptxas info    : Used 13 registers, 512 bytes smem, 48 bytes cmem[0], 3 textures
+ptxas info    : Compiling entry function '_Z12check_updatePbPf' for 'sm_20'
+ptxas info    : Used 10 registers, 48 bytes cmem[0], 4 bytes cmem[16], 6 textures
+
+##################### NVPROF ############################
+
+==28882== Profiling application: ./MolDyn_NVE.x 0
+==28882== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 54.98%  426.73ms     10000  42.672us  41.775us  44.679us  force_gpu(float*, float*, float*, bool*)
+ 15.16%  117.65ms      1001  117.53us  104.28us  998.66us  measure_kinetic(Lock, float*)
+  7.35%  57.080ms     10000  5.7080us  5.4920us  7.7090us  verlet_gpu(float*, float*, float*, float*, float*, float*, float*, float*, float*)
+  6.15%  47.773ms     15697  3.0430us  1.4400us  34.336us  [CUDA memset]
+  5.39%  41.865ms     14010  2.9880us  2.7200us  23.777us  [CUDA memcpy DtoH]
+  4.17%  32.336ms      1001  32.303us  30.536us  47.659us  measure_properties(Lock, float*, float*, float*)
+  3.83%  29.753ms      1347  22.088us  21.503us  23.237us  update_list(bool*)
+  2.96%  23.012ms     10000  2.3010us  2.1040us  3.6020us  check_update(bool*, float*)
+  0.00%  23.617us        16  1.4760us  1.4400us  1.6320us  [CUDA memcpy HtoD]
+
+==28882== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 59.92%  1.40034s     33349  41.990us  35.730us  600.41us  cudaLaunch
+ 20.59%  481.16ms     14019  34.321us  10.014us  1.0213ms  cudaMemcpy
+  8.23%  192.37ms     15697  12.255us  8.7380us  548.03us  cudaMemset
+  6.20%  144.97ms      1020  142.13us  7.8510us  128.86ms  cudaMalloc
+  2.11%  49.327ms      3021  16.327us  1.7190us  535.25us  cudaFree
+  1.90%  44.314ms    157353     281ns     207ns  561.79us  cudaSetupArgument
+  0.85%  19.758ms     33349     592ns     338ns  553.44us  cudaConfigureCall
+  0.15%  3.5847ms       364  9.8470us     285ns  421.71us  cuDeviceGetAttribute
+  0.02%  425.61us         4  106.40us  79.065us  179.49us  cuDeviceTotalMem
+  0.01%  345.81us         4  86.451us  80.436us  92.197us  cuDeviceGetName
+  0.00%  96.037us         7  13.719us  9.8890us  33.343us  cudaMemcpyToSymbol
+  0.00%  50.204us        12  4.1830us  2.2640us  23.699us  cudaBindTexture
+  0.00%  41.717us        12  3.4760us  1.3180us  15.891us  cudaUnbindTexture
+  0.00%  32.195us         2  16.097us  7.2920us  24.903us  cudaEventRecord
+  0.00%  24.903us         1  24.903us  24.903us  24.903us  cudaSetDevice
+  0.00%  9.0510us         2  4.5250us  1.2480us  7.8030us  cudaEventCreate
+  0.00%  7.2090us        12     600ns     282ns  2.7390us  cuDeviceGet
+  0.00%  6.4550us         1  6.4550us  6.4550us  6.4550us  cudaEventSynchronize
+  0.00%  4.1380us         1  4.1380us  4.1380us  4.1380us  cudaEventElapsedTime
+  0.00%  4.1050us         3  1.3680us     471ns  2.8070us  cuDeviceGetCount
+

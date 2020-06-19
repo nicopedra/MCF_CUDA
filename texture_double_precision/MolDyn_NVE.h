@@ -8,10 +8,10 @@
 #include <cuda.h>
 #include "lock.h"
 
-#define bl 128 //512
+#define bl 512 //512
 #define th_verlet 128 //128
-#define th_measure 128 //1024 
-#define th_kinetic 128 //1024 
+#define th_measure 1024 //1024 
+#define th_kinetic 1024 //1024 
 using namespace std;
 
 //for Initialization
@@ -993,14 +993,14 @@ vector<double> data(2);
  for (auto & el : names) {
 	for (int i=0;i<N;i++) 
 		 v_mean.push_back( mean_v(properties_gpu[j], (i+1)*L, i*L ));
-	 if ( j== 2) data = last_data_from_datablocking(N,v_mean);
+	 if ( j == 2 ) data = last_data_from_datablocking(N,v_mean);
 	 data_blocking(N,v_mean,0,el+to_string(nstep)+".out");
 	 properties_gpu[j].clear();
 	 j++;
 	 v_mean.clear();
  }
  //must be within two sigma
- accettazione = 2*data[1];
+ accettazione = data[1];
  m_temp = data[0];
  cout << "temperatura di ora: " << data[0] << " , con incertezza: " << data[1]<< endl;
  v_mean.clear();

@@ -18,4 +18,6 @@ clean:
 copy:
 	cp config.0 old.0
 	cp config.final old.final
-
+oldcopy:
+	cp old.0 config.0
+	cp old.final config.final

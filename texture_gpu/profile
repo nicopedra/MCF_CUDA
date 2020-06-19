@@ -1,8 +1,8 @@
 UNA SINGOLA SIMULAZIONE SOLIDO , 108 PARTICELLE, 10'000 STEP
 
-TEMPO TOTALE ESECUZIONE : 953.5 ms
+TEMPO TOTALE ESECUZIONE : 830.2 ms
 
-NUMERO DI BLOCCHI 128 , NUMERO DI THREADS PER BLOCCO 128
+NUMERO DI BLOCCHI 108 , NUMERO DI THREADS PER BLOCCO 128
 
 ptxas warning : 'option -abi=no' might get deprecated in future
 ptxas info    : 320 bytes gmem, 20 bytes cmem[2], 56 bytes cmem[14]

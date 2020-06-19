@@ -2,7 +2,7 @@ UNA SINGOLA SIMULAZIONE SOLIDO , 108 PARTICELLE, 10'000 STEP
 
 TEMPO TOTALE ESECUZIONE : 1514.4 ms
 
-NUMERO DI BLOCCHI 128 , NUMERO DI THREADS PER BLOCCO 128
+NUMERO DI BLOCCHI 108 , NUMERO DI THREADS PER BLOCCO 128
 
 ptxas warning : 'option -abi=no' might get deprecated in future
 ptxas info    : 320 bytes gmem, 40 bytes cmem[2], 56 bytes cmem[14]
@@ -17,37 +17,37 @@ ptxas info    : Used 19 registers, 1024 bytes smem, 48 bytes cmem[0], 3 textures
 
 ############################################## NVPROF #################################
 
-==24909== Profiling application: ./MolDyn_NVE.x 0
-==24909== Profiling result:
+==28381== Profiling application: ./MolDyn_NVE.x 0
+==28381== Profiling result:
 Time(%)      Time     Calls       Avg       Min       Max  Name
- 49.42%  625.13ms     10000  62.513us  48.294us  72.343us  force_gpu(double*, double*, double*)
- 36.36%  459.87ms      1001  459.42us  391.82us  3.0821ms  measure_properties(Lock, double*, double*, double*)
-  8.82%  111.50ms      1001  111.39us  100.72us  153.69us  measure_kinetic(Lock, double*)
-  3.92%  49.598ms     10000  4.9590us  4.8120us  6.7820us  verlet_gpu(double*, double*, double*, double*, double*, double*, double*, double*, double*)
-  0.91%  11.465ms      4010  2.8590us  2.7200us  23.617us  [CUDA memcpy DtoH]
-  0.58%  7.2737ms      3003  2.4220us  1.4400us  23.393us  [CUDA memset]
-  0.00%  20.640us        14  1.4740us  1.4400us  1.6640us  [CUDA memcpy HtoD]
+ 49.41%  626.56ms     10000  62.656us  48.228us  72.359us  force_gpu(double*, double*, double*)
+ 36.31%  460.44ms      1001  459.98us  384.95us  3.0306ms  measure_properties(Lock, double*, double*, double*)
+  8.83%  111.94ms      1001  111.83us  101.97us  421.72us  measure_kinetic(Lock, double*)
+  3.93%  49.788ms     10000  4.9780us  4.8180us  6.7760us  verlet_gpu(double*, double*, double*, double*, double*, double*, double*, double*, double*)
+  0.90%  11.355ms      4010  2.8310us  2.7200us  12.896us  [CUDA memcpy DtoH]
+  0.62%  7.9212ms      3003  2.6370us  1.7920us  13.280us  [CUDA memset]
+  0.00%  25.762us        14  1.8400us  1.8240us  2.0170us  [CUDA memcpy HtoD]
 
-==24909== API calls:
+==28381== API calls:
 Time(%)      Time     Calls       Avg       Min       Max  Name
- 49.81%  917.17ms     22002  41.685us  39.064us  595.16us  cudaLaunch
- 26.65%  490.76ms      3019  162.56us  1.9050us  3.1115ms  cudaFree
- 10.96%  201.83ms      4019  50.218us  9.9430us  403.66us  cudaMemcpy
-  7.98%  146.99ms      1017  144.53us  7.8440us  131.41ms  cudaMalloc
-  1.88%  34.622ms      3003  11.529us  9.3560us  25.785us  cudaMemset
-  1.86%  34.177ms    126006     271ns     231ns  550.61us  cudaSetupArgument
-  0.61%  11.275ms     22002     512ns     351ns  542.20us  cudaConfigureCall
-  0.19%  3.4535ms       364  9.4870us     267ns  401.86us  cuDeviceGetAttribute
-  0.02%  403.10us         4  100.77us  75.238us  169.12us  cuDeviceTotalMem
-  0.02%  331.73us         4  82.933us  77.311us  87.631us  cuDeviceGetName
-  0.01%  92.419us        12  7.7010us  1.1400us  50.854us  cudaUnbindTexture
-  0.00%  87.674us         5  17.534us  10.138us  35.218us  cudaMemcpyToSymbol
-  0.00%  51.444us        12  4.2870us  2.1620us  24.970us  cudaBindTexture
-  0.00%  41.349us         2  20.674us  7.4480us  33.901us  cudaEventRecord
-  0.00%  24.140us         1  24.140us  24.140us  24.140us  cudaSetDevice
-  0.00%  14.331us         1  14.331us  14.331us  14.331us  cudaEventElapsedTime
-  0.00%  9.2220us         2  4.6110us  1.2630us  7.9590us  cudaEventCreate
-  0.00%  6.7170us        12     559ns     265ns  2.6080us  cuDeviceGet
-  0.00%  6.1840us         1  6.1840us  6.1840us  6.1840us  cudaEventSynchronize
-  0.00%  3.9940us         3  1.3310us     546ns  2.6590us  cuDeviceGetCount
+ 49.87%  934.70ms     22002  42.482us  39.405us  865.64us  cudaLaunch
+ 26.27%  492.34ms      3019  163.08us  1.9230us  3.0610ms  cudaFree
+ 10.98%  205.86ms      4019  51.221us  12.839us  437.42us  cudaMemcpy
+  8.25%  154.56ms      1017  151.97us  11.769us  138.51ms  cudaMalloc
+  1.91%  35.801ms      3003  11.921us  9.5580us  42.906us  cudaMemset
+  1.88%  35.184ms    126006     279ns     233ns  550.07us  cudaSetupArgument
+  0.61%  11.456ms     22002     520ns     368ns  548.63us  cudaConfigureCall
+  0.18%  3.3808ms       364  9.2870us     264ns  380.96us  cuDeviceGetAttribute
+  0.02%  409.50us         4  102.37us  74.990us  163.13us  cuDeviceTotalMem
+  0.02%  341.96us         4  85.489us  78.739us  91.765us  cuDeviceGetName
+  0.01%  101.42us         5  20.283us  13.051us  45.622us  cudaMemcpyToSymbol
+  0.00%  71.309us        12  5.9420us  3.2050us  33.246us  cudaBindTexture
+  0.00%  45.939us        12  3.8280us  1.2230us  18.497us  cudaUnbindTexture
+  0.00%  23.144us         1  23.144us  23.144us  23.144us  cudaSetDevice
+  0.00%  17.738us         2  8.8690us  7.9060us  9.8320us  cudaEventRecord
+  0.00%  12.372us         2  6.1860us  1.8100us  10.562us  cudaEventCreate
+  0.00%  6.5430us        12     545ns     263ns  2.4870us  cuDeviceGet
+  0.00%  4.0850us         1  4.0850us  4.0850us  4.0850us  cudaEventSynchronize
+  0.00%  3.4700us         3  1.1560us     442ns  2.3230us  cuDeviceGetCount
+  0.00%  2.9380us         1  2.9380us  2.9380us  2.9380us  cudaEventElapsedTime
 

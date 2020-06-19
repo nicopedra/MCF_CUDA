@@ -1,5 +1,7 @@
 #include "MolDyn_NVE.h"
 
+//nvprof --cpu-profiling on --cpu-profiling-mode flat ./MolDyn_NVE.x 0
+
 //#define equilibration
 
 using namespace std;
@@ -10,12 +12,14 @@ int main(int argc, char** argv){
   temp = 0.8;
   m_temp=0;
  // int nconf;
-  int N;
+  int N=100;//number of blocks for blocking
   accettazione = 0.001;
-  float errore = abs(m_temp-temp);  
+  float errore = abs(m_temp-temp);
+  clock_t start,stop;
+  Input(); 
 #ifdef equilibration
   cout << "equilibration phase! " << endl;
-  while ( errore > accettazione ) { //utile per equilibrazione
+  while ( errore > accettazione ) { 
         cout <<"################################################################" << endl;
 cout << "                tentativo numero: " << tentativo << endl;
         cout <<"################################################################" << endl;
@@ -31,12 +35,11 @@ cout << "                tentativo numero: " << tentativo << endl;
   restart = atoi(argv[1]);
 #endif
   cout << "restart = " << restart << endl;
-  clock_t start,stop;
-  start = clock();
-  Input();  //Inizialization
+  //Input();  //Inizialization
+  Initialization();//initialization
   //nconf = 1;
-  N = 100; //number of blocks for data blocking
-
+  cout << "start measuring execution time" << endl;
+  start = clock();
   for(int istep=1; istep <= nstep; ++istep) {
      Move();           //Move particles with Verlet algorithm
      if(istep%iprint == 0) cout << "Number of time-steps: " << istep << endl;
@@ -47,10 +50,14 @@ cout << "                tentativo numero: " << tentativo << endl;
      }
   }
 
+  stop = clock();
+  cout << "stop execution time" << endl;
+  cout << "---------------------" << endl; 
+  cout << "data analysis" << endl;
+
   print_properties();
   data_blocking_MD(N);
 
-  stop = clock();
   ofstream Time("simulation.time",ios::app);
   float elapsedTime = (float)(stop-start)/(float)CLOCKS_PER_SEC*1000.0f;
   printf("Time passed: %3.1f ms\n", elapsedTime);
@@ -65,13 +72,16 @@ cout << "                tentativo numero: " << tentativo << endl;
 #ifdef equilibration
   tentativo++;
   }
-#endif
+#else
   cout << endl;
   cout <<"################################################################" << endl;
   cout << "REMEMBER: if want to save final and penultimate configurations" << endl;
   cout <<"in file old.0 (last one) and old.final(penultimate) do command-> make copy" << endl;
   cout <<"##################################################################" << endl;
   cout << endl;
+#endif
+exit();
+
   return 0;
 }
 
