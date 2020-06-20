@@ -4,11 +4,24 @@ TEMPO TOTALE ESECUZIONE : 901.9 ms
 
 NUMERO DI BLOCCHI 108 , NUMERO DI THREADS PER BLOCCO 128
 
+ptxas warning : 'option -abi=no' might get deprecated in future
+ptxas info    : 78016 bytes gmem, 96 bytes cmem[2], 120 bytes cmem[14]
+ptxas info    : Compiling entry function '_Z10verlet_gpuPfS_S_S_S_S_S_S_S_S_S_S_' for 'sm_20'
+ptxas info    : Used 34 registers, 128 bytes cmem[0], 44 bytes cmem[16]
+ptxas info    : Compiling entry function '_Z18measure_properties4LockPfS0_S0_S0_S0_S0_' for 'sm_20'
+ptxas info    : Used 30 registers, 8192 bytes smem, 88 bytes cmem[0], 100 bytes cmem[16]
+ptxas info    : Compiling entry function '_Z9force_gpuPfS_S_S_S_S_' for 'sm_20'
+ptxas info    : Used 37 registers, 1536 bytes smem, 80 bytes cmem[0], 96 bytes cmem[16]
+ptxas info    : Compiling entry function '_Z15measure_kinetic4LockPfS0_S0_S0_' for 'sm_20'
+ptxas info    : Used 17 registers, 4096 bytes smem, 72 bytes cmem[0]
+
+###################### NVPROF ################################
+
 ==28030== Profiling application: ./MolDyn_NVE.x 0
 ==28030== Profiling result:
 Time(%)      Time     Calls       Avg       Min       Max  Name
  66.13%  428.79ms     10000  42.879us  41.013us  51.597us  force_gpu(float*, float*, float*, float*, float*, float*)
- 18.50%  119.97ms      1001  119.85us  103.29us  1.9137ms  measure_kinetic(Lock, float*, float*, float*, float*)
+, 18.50%  119.97ms      1001  119.85us  103.29us  1.9137ms  measure_kinetic(Lock, float*, float*, float*, float*)
   7.96%  51.608ms     10000  5.1600us  4.8940us  6.5340us  verlet_gpu(float*, float*, float*, float*, float*, float*, float*, float*, float*, float*, float*, float*)
   4.66%  30.204ms      1001  30.173us  29.318us  42.341us  measure_properties(Lock, float*, float*, float*, float*, float*, float*)
   1.73%  11.240ms      4010  2.8030us  2.7200us  23.489us  [CUDA memcpy DtoH]
