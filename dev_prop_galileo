@@ -1,0 +1,22 @@
+gio 25 giu 2020, 11.35.29, CEST
+ info sul device 0   
+ nome: Tesla K80
+ CUDA capability: 3.7
+Clock rate:  823500
+Device copy overlap:  Enabled
+Kernel execution timeout :  Enabled
+   --- Memory Information for device 0 ---
+Total global mem:  11996954624
+Total constant Mem:  65536
+Max mem pitch:  2147483647
+Texture Alignment:  512
+   --- MP Information for device 0 ---
+Multiprocessor count:  13
+Shared mem per mp:  49152
+Registers per mp:  65536
+Threads in warp:  32
+Max threads per block:  1024
+Max thread dimensions:  (1024, 1024, 64)
+Max grid dimensions:  (2147483647, 65535, 65535)
+
+gio 25 giu 2020, 11.35.29, CEST

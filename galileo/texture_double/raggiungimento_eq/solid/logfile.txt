@@ -1,0 +1,708 @@
+mer 24 giu 2020, 10.28.40, CEST
+using 108 blocksPerGrid
+using 128 threadsPerBlock for measure properties
+using 128 threadsPerBlock for verlet algorithm
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+using method of random velocities: 
+target temperature = 0.8
+Number of particles = 108
+Density of particles = 1.1
+Volume of the simulation box = 98.1818
+Edge of the simulation box = 4.61329
+cutoff r: 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.0230664
+equilibration phase! 
+################################################################
+                tentativo numero: 1
+################################################################
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.71336
+Pressure (with tail corrections) = 1.25104
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.409171 , con incertezza: 0.00332626
+ora l'errore tra la temperatura del sistema e quella target è: 0.390829
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  768.3 ms
+################################################################
+                tentativo numero: 2
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.34733
+Initial potential energy (with tail corrections) = -8.10586
+Pressure (with tail corrections) = 4.47889
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.597099 , con incertezza: 0.00274928
+ora l'errore tra la temperatura del sistema e quella target è: 0.202901
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  616.8 ms
+################################################################
+                tentativo numero: 3
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.13243
+Initial potential energy (with tail corrections) = -7.83904
+Pressure (with tail corrections) = 5.95657
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.690922 , con incertezza: 0.00314549
+ora l'errore tra la temperatura del sistema e quella target è: 0.109078
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  600.7 ms
+################################################################
+                tentativo numero: 4
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.06893
+Initial potential energy (with tail corrections) = -7.68354
+Pressure (with tail corrections) = 6.8198
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.743779 , con incertezza: 0.0028601
+ora l'errore tra la temperatura del sistema e quella target è: 0.0562209
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  597.3 ms
+################################################################
+                tentativo numero: 5
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.042
+Initial potential energy (with tail corrections) = -7.58832
+Pressure (with tail corrections) = 7.35838
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.778449 , con incertezza: 0.00316158
+ora l'errore tra la temperatura del sistema e quella target è: 0.0215514
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  596.8 ms
+################################################################
+                tentativo numero: 6
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+0.986087
+Initial potential energy (with tail corrections) = -7.6198
+Pressure (with tail corrections) = 7.24101
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.764899 , con incertezza: 0.00304301
+ora l'errore tra la temperatura del sistema e quella target è: 0.0351015
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  595.9 ms
+################################################################
+                tentativo numero: 7
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.00534
+Initial potential energy (with tail corrections) = -7.61193
+Pressure (with tail corrections) = 7.20445
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.769158 , con incertezza: 0.00301282
+ora l'errore tra la temperatura del sistema e quella target è: 0.0308421
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  596.0 ms
+################################################################
+                tentativo numero: 8
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.03143
+Initial potential energy (with tail corrections) = -7.53762
+Pressure (with tail corrections) = 7.6238
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.794625 , con incertezza: 0.00391105
+ora l'errore tra la temperatura del sistema e quella target è: 0.00537519
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  594.6 ms
+################################################################
+                tentativo numero: 9
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.0295
+Initial potential energy (with tail corrections) = -7.47458
+Pressure (with tail corrections) = 7.98141
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.819894 , con incertezza: 0.00363683
+ora l'errore tra la temperatura del sistema e quella target è: 0.0198945
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  594.5 ms
+################################################################
+                tentativo numero: 10
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.06584
+Initial potential energy (with tail corrections) = -7.32529
+Pressure (with tail corrections) = 8.77473
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.870066 , con incertezza: 0.0038876
+ora l'errore tra la temperatura del sistema e quella target è: 0.0700657
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  592.7 ms
+################################################################
+                tentativo numero: 11
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+0.966418
+Initial potential energy (with tail corrections) = -7.41048
+Pressure (with tail corrections) = 8.34182
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.838547 , con incertezza: 0.00305027
+ora l'errore tra la temperatura del sistema e quella target è: 0.0385466
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  591.3 ms
+################################################################
+                tentativo numero: 12
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+0.995305
+Initial potential energy (with tail corrections) = -7.42215
+Pressure (with tail corrections) = 8.26726
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.835995 , con incertezza: 0.0036889
+ora l'errore tra la temperatura del sistema e quella target è: 0.0359948
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  592.5 ms
+################################################################
+                tentativo numero: 13
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.0462
+Initial potential energy (with tail corrections) = -7.31979
+Pressure (with tail corrections) = 8.95839
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.872748 , con incertezza: 0.00378974
+ora l'errore tra la temperatura del sistema e quella target è: 0.0727484
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  591.5 ms
+################################################################
+                tentativo numero: 14
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+0.960981
+Initial potential energy (with tail corrections) = -7.4192
+Pressure (with tail corrections) = 8.23512
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.837275 , con incertezza: 0.00354936
+ora l'errore tra la temperatura del sistema e quella target è: 0.037275
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  593.8 ms
+################################################################
+                tentativo numero: 15
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+0.994594
+Initial potential energy (with tail corrections) = -7.4312
+Pressure (with tail corrections) = 8.26561
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.830532 , con incertezza: 0.00333937
+ora l'errore tra la temperatura del sistema e quella target è: 0.0305325
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  592.5 ms
+################################################################
+                tentativo numero: 16
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+0.982946
+Initial potential energy (with tail corrections) = -7.47216
+Pressure (with tail corrections) = 7.97307
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.818492 , con incertezza: 0.00335533
+ora l'errore tra la temperatura del sistema e quella target è: 0.0184919
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  593.5 ms
+################################################################
+                tentativo numero: 17
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.00883
+Initial potential energy (with tail corrections) = -7.45144
+Pressure (with tail corrections) = 8.1097
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.826265 , con incertezza: 0.00332111
+ora l'errore tra la temperatura del sistema e quella target è: 0.0262646
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  593.5 ms
+################################################################
+                tentativo numero: 18
+################################################################
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+0.971389
+Initial potential energy (with tail corrections) = -7.5338
+Pressure (with tail corrections) = 7.61281
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.799169 , con incertezza: 0.00365326
+ora l'errore tra la temperatura del sistema e quella target è: 0.000830927
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  594.7 ms
+mer 24 giu 2020, 10.28.52, CEST

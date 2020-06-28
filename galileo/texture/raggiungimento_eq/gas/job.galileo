@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#SBATCH --job-name mioJob   #NOME JOB
+#SBATCH --time=00:05:00   #8 ore è il massimo
+#SBATCH --nodes=1  #chiedo 1 nodo di calcolo
+#SBATCH --ntasks-per-node=1    #il quale ha 36 cpu ma me ne basta una, magari, perchè ho la GPU
+#SBATCH --mem=118000   #massima RAM, in MB
+#SBATCH --account IscrC_PTPR    #progetto
+#SBATCH --gres=gpu:kepler:1   #puoi chiederne 0/1/2 per ogni nodo
+#SBATCH --partition=gll_usr_gpuprod   #partizione gpu
+#SBATCH --error=error.txt
+#SBATCH --output=logfile.txt
+
+
+module load cuda/10.0
+
+date
+./MolDyn_NVE.x
+date
+

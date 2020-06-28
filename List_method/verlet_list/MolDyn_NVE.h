@@ -8,10 +8,10 @@
 #include <cuda.h>
 #include "lock.h"
 
-#define bl 512 //512
+#define bl 108 //512
 #define th_verlet 128 //128
-#define th_measure 1024 //1024
-#define th_kinetic 1024 //1024
+#define th_measure 128 //1024
+#define th_kinetic 128 //1024
 
 using namespace std;
 
@@ -168,7 +168,7 @@ void Move_gpu(Particles*);
  
 void print_device_properties();
 
-__global__ void  measure_properties(Lock lock,float*,float*,float*);
+__global__ void  measure_properties(float*,float*,float*);
 
 __global__ void  measure_kinetic(Lock lock,float*);
 
@@ -797,7 +797,7 @@ __global__ void  measure_kinetic(Lock lock,float *k) {
 
 }
 
-__global__ void  measure_properties(Lock lock,float *v,float *w,float* hist) {
+__global__ void  measure_properties(float *v,float *w,float* hist) {
 
 	__shared__ float pot[th_measure];
 	__shared__ float vir[th_measure];
@@ -855,7 +855,7 @@ void Measure(Particles* P) {
 	HANDLE_ERROR( cudaMemset(dev_hist,0, nbins*2*sizeof(float)  ) );
 	HANDLE_ERROR( cudaMemset(dev_k,0, sizeof(float)  ) );
 
-	measure_properties<<<bl,th_measure>>>(lock,dev_v,dev_w,dev_hist);
+	measure_properties<<<bl,th_measure>>>(dev_v,dev_w,dev_hist);
 	measure_kinetic<<<bl,th_kinetic>>>(lock,dev_k);
 	//cudaDeviceSynchronize();
 

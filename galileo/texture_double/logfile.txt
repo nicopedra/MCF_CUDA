@@ -1,0 +1,64 @@
+mer 24 giu 2020, 15.58.13, CEST
+using 512 blocksPerGrid
+using 1024 threadsPerBlock for measure properties
+using 128 threadsPerBlock for verlet algorithm
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+using method of random velocities: 
+target temperature = 0.8
+Number of particles = 4000
+Density of particles = 1.1
+Volume of the simulation box = 3636.36
+Edge of the simulation box = 15.3776
+cutoff r: 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.0768881
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.71336
+Pressure (with tail corrections) = 1.25104
+Ekin = 1.2
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop measuring
+temperatura di ora: 0.409242 , con incertezza: 0.00278204
+ora l'errore tra la temperatura del sistema e quella target è: 0.390758
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  28864.8 ms
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+
+mer 24 giu 2020, 15.58.42, CEST

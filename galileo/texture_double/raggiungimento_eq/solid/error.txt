@@ -1,0 +1,2 @@
+cp: impossibile eseguire stat di "config.final": File o directory non esistente
+make: *** [copy] Errore 1

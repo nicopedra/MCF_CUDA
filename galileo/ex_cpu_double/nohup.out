@@ -1,0 +1,480 @@
+config_108.fcc
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+target temperature = 0.8
+Number of particles = 108
+Density of particles = 1.1
+Volume of the simulation box = 98.1818
+Edge of the simulation box = 4.61329
+cutoff r= 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.0230664
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.71342
+Pressure (with tail corrections) = 1.25105
+
+initial Ekin = 1.2
+
+start measuring execution time
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop execution time
+---------------------
+data analysis
+temperatura di ora: 0.409105 , con incertezza: 0.00332321
+Time passed: 46200.0 ms
+ora l'errore tra la temperatura del sistema e quella target è: 0.390895
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+
+config_256.fcc
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+target temperature = 0.8
+Number of particles = 256
+Density of particles = 1.1
+Volume of the simulation box = 232.727
+Edge of the simulation box = 6.15105
+cutoff r= 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.0307552
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.71375
+Pressure (with tail corrections) = 1.25105
+
+initial Ekin = 1.2
+
+start measuring execution time
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop execution time
+---------------------
+data analysis
+temperatura di ora: 0.409453 , con incertezza: 0.00306188
+Time passed: 135870.0 ms
+ora l'errore tra la temperatura del sistema e quella target è: 0.390547
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+
+config_500.fcc
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+target temperature = 0.8
+Number of particles = 500
+Density of particles = 1.1
+Volume of the simulation box = 454.545
+Edge of the simulation box = 7.68881
+cutoff r= 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.038444
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.71308
+Pressure (with tail corrections) = 1.25113
+
+initial Ekin = 1.2
+
+start measuring execution time
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop execution time
+---------------------
+data analysis
+temperatura di ora: 0.408877 , con incertezza: 0.00288863
+Time passed: 347480.0 ms
+ora l'errore tra la temperatura del sistema e quella target è: 0.391123
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+
+config_864.fcc
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+target temperature = 0.8
+Number of particles = 864
+Density of particles = 1.1
+Volume of the simulation box = 785.455
+Edge of the simulation box = 9.22657
+cutoff r= 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.0461329
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.71313
+Pressure (with tail corrections) = 1.25091
+
+initial Ekin = 1.2
+
+start measuring execution time
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop execution time
+---------------------
+data analysis
+temperatura di ora: 0.408959 , con incertezza: 0.00284267
+Time passed: 818040.0 ms
+ora l'errore tra la temperatura del sistema e quella target è: 0.391041
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+
+config_1372.fcc
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+target temperature = 0.8
+Number of particles = 1372
+Density of particles = 1.1
+Volume of the simulation box = 1247.27
+Edge of the simulation box = 10.7643
+cutoff r= 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.0538217
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.71334
+Pressure (with tail corrections) = 1.25095
+
+initial Ekin = 1.2
+
+start measuring execution time
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop execution time
+---------------------
+data analysis
+temperatura di ora: 0.409362 , con incertezza: 0.00278593
+Time passed: 1784690.1 ms
+ora l'errore tra la temperatura del sistema e quella target è: 0.390638
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+
+config_2048.fcc
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+target temperature = 0.8
+Number of particles = 2048
+Density of particles = 1.1
+Volume of the simulation box = 1861.82
+Edge of the simulation box = 12.3021
+cutoff r= 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.0615105
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.7137
+Pressure (with tail corrections) = 1.25116
+
+initial Ekin = 1.2
+
+start measuring execution time
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop execution time
+---------------------
+data analysis
+temperatura di ora: 0.409139 , con incertezza: 0.00277016
+Time passed: 3631750.0 ms
+ora l'errore tra la temperatura del sistema e quella target è: 0.390861
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+
+config_2916.fcc
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+target temperature = 0.8
+Number of particles = 2916
+Density of particles = 1.1
+Volume of the simulation box = 2650.91
+Edge of the simulation box = 13.8399
+cutoff r= 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.0691993
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.71222
+Pressure (with tail corrections) = 1.25067
+
+initial Ekin = 1.2
+
+start measuring execution time
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop execution time
+---------------------
+data analysis
+temperatura di ora: 0.409024 , con incertezza: 0.00274812
+Time passed: 6914360.0 ms
+ora l'errore tra la temperatura del sistema e quella target è: 0.390976
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+
+config_4000.fcc
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+target temperature = 0.8
+Number of particles = 4000
+Density of particles = 1.1
+Volume of the simulation box = 3636.36
+Edge of the simulation box = 15.3776
+cutoff r= 2.2
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 10000
+
+vtail: -0.862908
+ptail: -1.72073
+size of each bin: 0.0768881
+restart = 0
+using method of random velocities: 
+Read initial configuration from file config.fcc
+
+Prepare random velocities with center of mass velocity equal to zero 
+
+Initial potential energy (with tail corrections) = -8.71122
+Pressure (with tail corrections) = 1.25049
+
+initial Ekin = 1.2
+
+start measuring execution time
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+stop execution time
+---------------------
+data analysis
+temperatura di ora: 0.409231 , con incertezza: 0.00278339
+Time passed: 12497649.0 ms
+ora l'errore tra la temperatura del sistema e quella target è: 0.390769
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+

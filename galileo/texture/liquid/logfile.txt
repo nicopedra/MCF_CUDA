@@ -1,0 +1,157 @@
+mer 24 giu 2020, 15.40.33, CEST
+using 108 blocksPerGrid
+using 128 threadsPerBlock for measure properties
+using 128 threadsPerBlock for verlet algorithm
+
+Classic Lennard-Jones fluid        
+Molecular dynamics simulation in NVE ensemble  
+
+Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]
+
+The program uses Lennard-Jones units 
+using method of random velocities: 
+target temperature = 1.1
+Number of particles = 108
+Density of particles = 0.8
+Volume of the simulation box = 135
+Edge of the simulation box = 5.12993
+cutoff r: 2.5
+The program integrates Newton equations with the Verlet method 
+Time step = 0.0005
+Number of steps = 100000
+
+vtail: -0.428346
+ptail: -0.855522
+size of each bin: 0.0256496
+restart = 1
+reading configurations from precedent simulation: 
+Read initial configuration from file config.0
+
+
+
+scale factor: 
+1.03677
+Initial potential energy (with tail corrections) = -5.46126
+Pressure (with tail corrections) = 1.37366
+Ekin = 1.65
+
+starting measuring time
+
+
+Number of time-steps: 1000
+Number of time-steps: 2000
+Number of time-steps: 3000
+Number of time-steps: 4000
+Number of time-steps: 5000
+Number of time-steps: 6000
+Number of time-steps: 7000
+Number of time-steps: 8000
+Number of time-steps: 9000
+Number of time-steps: 10000
+Number of time-steps: 11000
+Number of time-steps: 12000
+Number of time-steps: 13000
+Number of time-steps: 14000
+Number of time-steps: 15000
+Number of time-steps: 16000
+Number of time-steps: 17000
+Number of time-steps: 18000
+Number of time-steps: 19000
+Number of time-steps: 20000
+Number of time-steps: 21000
+Number of time-steps: 22000
+Number of time-steps: 23000
+Number of time-steps: 24000
+Number of time-steps: 25000
+Number of time-steps: 26000
+Number of time-steps: 27000
+Number of time-steps: 28000
+Number of time-steps: 29000
+Number of time-steps: 30000
+Number of time-steps: 31000
+Number of time-steps: 32000
+Number of time-steps: 33000
+Number of time-steps: 34000
+Number of time-steps: 35000
+Number of time-steps: 36000
+Number of time-steps: 37000
+Number of time-steps: 38000
+Number of time-steps: 39000
+Number of time-steps: 40000
+Number of time-steps: 41000
+Number of time-steps: 42000
+Number of time-steps: 43000
+Number of time-steps: 44000
+Number of time-steps: 45000
+Number of time-steps: 46000
+Number of time-steps: 47000
+Number of time-steps: 48000
+Number of time-steps: 49000
+Number of time-steps: 50000
+Number of time-steps: 51000
+Number of time-steps: 52000
+Number of time-steps: 53000
+Number of time-steps: 54000
+Number of time-steps: 55000
+Number of time-steps: 56000
+Number of time-steps: 57000
+Number of time-steps: 58000
+Number of time-steps: 59000
+Number of time-steps: 60000
+Number of time-steps: 61000
+Number of time-steps: 62000
+Number of time-steps: 63000
+Number of time-steps: 64000
+Number of time-steps: 65000
+Number of time-steps: 66000
+Number of time-steps: 67000
+Number of time-steps: 68000
+Number of time-steps: 69000
+Number of time-steps: 70000
+Number of time-steps: 71000
+Number of time-steps: 72000
+Number of time-steps: 73000
+Number of time-steps: 74000
+Number of time-steps: 75000
+Number of time-steps: 76000
+Number of time-steps: 77000
+Number of time-steps: 78000
+Number of time-steps: 79000
+Number of time-steps: 80000
+Number of time-steps: 81000
+Number of time-steps: 82000
+Number of time-steps: 83000
+Number of time-steps: 84000
+Number of time-steps: 85000
+Number of time-steps: 86000
+Number of time-steps: 87000
+Number of time-steps: 88000
+Number of time-steps: 89000
+Number of time-steps: 90000
+Number of time-steps: 91000
+Number of time-steps: 92000
+Number of time-steps: 93000
+Number of time-steps: 94000
+Number of time-steps: 95000
+Number of time-steps: 96000
+Number of time-steps: 97000
+Number of time-steps: 98000
+Number of time-steps: 99000
+Number of time-steps: 100000
+stop time
+temperatura di ora: 1.09802 , con incertezza: 0.00186901
+ora l'errore tra la temperatura del sistema e quella target è: 0.00198221
+cp config.0 old.0
+cp config.final old.final
+Print penultimate configuration in config.final 
+
+Print final configuration to file config.0 
+
+Time:  4890.6 ms
+
+################################################################
+REMEMBER: if want to save final and penultimate configurations
+in file old.0 (last one) and old.final(penultimate) do command-> make copy
+##################################################################
+
+mer 24 giu 2020, 15.40.39, CEST

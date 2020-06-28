@@ -3,6 +3,6 @@
 	do
 		   echo $i
 		   cp config/$i config.fcc	
-		   ./MolDyn_NVE.x 0 10000 ## prima configurazione random
+		   ./MolDyn_NVE.x 0 ## prima configurazione random
 	done
 
